@@ -12,7 +12,7 @@ import Icon from '../components/Icon'
 export default function EventDetail() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { isAdmin, canPost, session } = useAuth()
+  const { isAdmin, canUpload, session } = useAuth()
   const [slide, setSlide] = useState(0)
   const [viewer, setViewer] = useState(null)
   const [upload, setUpload] = useState(false)
@@ -110,10 +110,10 @@ export default function EventDetail() {
         <div className="col" style={{ gap: 10, paddingBottom: 130 }}>
           <div className="row between">
             <div className="label">Photos &amp; videos</div>
-            {canPost && <button className="chip" onClick={() => setUpload(true)}><Icon name="plus" size={14} stroke={2} />Add</button>}
+            {canUpload && <button className="chip" onClick={() => setUpload(true)}><Icon name="plus" size={14} stroke={2} />Add</button>}
           </div>
           {media.length === 0 ? (
-            <div className="empty">No photos yet{canPost ? '. Be the first to add one.' : '.'}</div>
+            <div className="empty">No photos yet{canUpload ? '. Be the first to add one.' : '.'}</div>
           ) : (
             <div className="grid4">
               {media.slice(0, 12).map((m, i) => (

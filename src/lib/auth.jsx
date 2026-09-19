@@ -79,6 +79,7 @@ export function AuthProvider({ children }) {
       loading: session === undefined || !profileReady,
       isAdmin: role === 'admin',
       canPost: role === 'admin' || role === 'friend',
+      canUpload: !!role, // every guest can share photos and videos
       signIn,
       signUp,
       signOut,

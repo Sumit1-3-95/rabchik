@@ -162,7 +162,7 @@ function CommentsSheet({ open, item, onClose, onAdded }) {
   const [text, setText] = useState('')
   const load = useCallback(async () => {
     const { data } = await supabase
-      .from('media_comments').select('id,body,user_id,created_at,profiles(name)')
+      .from('media_comments').select('id,body,user_id,created_at,profiles!user_id(name)')
       .eq('media_id', item.id).order('created_at', { ascending: true })
     setList(data || [])
   }, [item.id])

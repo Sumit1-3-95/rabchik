@@ -12,6 +12,7 @@ import Settings from './pages/Settings'
 import EventEdit from './pages/admin/EventEdit'
 import EngageEdit from './pages/admin/EngageEdit'
 import Guests from './pages/admin/Guests'
+import Admins from './pages/admin/Admins'
 
 function Splash() {
   return <div className="app"><div className="spinner" aria-label="Loading" /></div>
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="/admin/events/:id" element={<Protected admin><EventEdit /></Protected>} />
         <Route path="/admin/engage/:type/:id" element={<Protected admin><EngageEdit /></Protected>} />
         <Route path="/admin/guests" element={<Protected admin><Guests /></Protected>} />
+        <Route path="/admin/admins" element={<Protected admin><Admins /></Protected>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

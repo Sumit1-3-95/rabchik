@@ -58,7 +58,7 @@ export default function EventEdit() {
       title: f.title.trim(), event_date: f.event_date, time_label: f.time_label || null, venue: f.venue || null,
       maps_url: f.maps_url || null, dress_code: f.dress_code || null, theme_label: f.theme_label || null,
       theme_colors: f.theme_colors, display_image_url: f.display_image_url, background_url: f.background_url,
-      banner_urls: f.banner_urls, menu_items: f.menu_items.filter((m) => m.name?.trim()),
+      banner_urls: f.banner_urls, menu_items: f.menu_items.filter((m) => m.name?.trim() || m.image_url).map((m) => ({ ...m, name: m.name?.trim() || '' })),
       expect: f.expect || null, trivia: f.trivia || null, sort: Number(f.sort) || 0, published: f.published,
     }
     const { data, error: err } = isNew
@@ -67,7 +67,7 @@ export default function EventEdit() {
     setBusy(false)
     if (err) return setError(err.message)
     toast('Saved')
-    nav(`/events/${data.id}`, { replace: true })
+    nav('/', { replace: true, state: { day: f.event_date } })
   }
 
   const remove = async () => {

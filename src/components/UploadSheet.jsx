@@ -33,18 +33,20 @@ export default function UploadSheet({ open, onClose, events, defaultEventId, onD
       for (let n = 0; n < checked.length; n++) {
         const { f, kind, duration } = checked[n]
         setProgress(`Uploading ${n + 1} of ${checked.length}…`)
-        const path = await uploadFile(f, session.user.id)
+        let path
+        try { path = await uploadFile(f, session.user.id) } catch (e2) { console.error('upload step failed', e2); throw e2 }
         const { error: err } = await supabase.from('media').insert({
           event_id: eventId || null, uploader: session.user.id, kind, path,
           caption: caption.trim() || null, is_story: asStory, duration,
-        })
-        if (err) throw err
+        }).select('id').single()
+        if (err) throw new Error(`Could not save the post: ${err.message}`)
       }
-      toast(checked.length > 1 ? 'Uploaded!' : 'Uploaded!')
+      toast(checked.length > 1 ? `${checked.length} uploaded` : 'Uploaded')
       setCaption('')
       onDone?.()
       onClose()
     } catch (err) {
+      console.error(err)
       setError(err.message || 'Upload failed')
     } finally {
       setBusy(false)

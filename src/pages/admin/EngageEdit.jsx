@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useQuery, toast } from '../../lib/hooks'
 import { Field, ImageInput } from '../../components/Field'
 import Icon from '../../components/Icon'
+import { THEMES } from '../../components/Poll'
 
 const TABLE = { poll: 'polls', trivia: 'trivia_cards', game: 'games' }
 
@@ -16,7 +17,7 @@ export default function EngageEdit() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const [poll, setPoll] = useState({ kind: 'single', question: '', options: ['', '', '', ''], max_choices: 2, is_open: true })
+  const [poll, setPoll] = useState({ kind: 'single', question: '', options: ['', '', '', ''], max_choices: 2, is_open: true, on_home: false, in_story: false, theme: null })
   const [trivia, setTrivia] = useState({ title: '', body: '', cover_url: null })
   const [game, setGame] = useState({ title: '', description: '', cover_url: null, status: 'soon' })
 
@@ -30,7 +31,7 @@ export default function EngageEdit() {
   useEffect(() => {
     const d = q.data
     if (!d) return
-    if (routeType === 'poll') setPoll({ ...d, options: [...(d.options || []), '', '', '', ''].slice(0, Math.max(4, (d.options || []).length)) })
+    if (routeType === 'poll') setPoll({ ...d, options: d.kind === 'versus' ? [d.options?.[0] || '', d.options?.[1] || ''] : [...(d.options || []), '', '', '', ''].slice(0, Math.max(4, (d.options || []).length)) })
     if (routeType === 'trivia') setTrivia({ title: d.title, body: d.body || '', cover_url: d.cover_url })
     if (routeType === 'game') setGame({ title: d.title, description: d.description || '', cover_url: d.cover_url, status: d.status })
   }, [q.data, routeType])
@@ -44,8 +45,13 @@ export default function EngageEdit() {
       if (type === 'poll') {
         const options = poll.options.map((o) => o.trim()).filter(Boolean)
         if (!poll.question.trim()) throw new Error('Write the question')
+        if (poll.kind === 'versus' && options.length !== 2) throw new Error('A this-or-that poll needs exactly two choices')
         if (poll.kind !== 'rating' && options.length < 2) throw new Error('Add at least two options')
-        row = { kind: poll.kind, question: poll.question.trim(), options: poll.kind === 'rating' ? [] : options, max_choices: poll.kind === 'multi' ? Number(poll.max_choices) || 2 : 1, is_open: poll.is_open }
+        row = {
+          kind: poll.kind, question: poll.question.trim(), options: poll.kind === 'rating' ? [] : options,
+          max_choices: poll.kind === 'multi' ? Number(poll.max_choices) || 2 : 1, is_open: poll.is_open,
+          on_home: !!poll.on_home, in_story: !!poll.in_story, theme: Number.isInteger(poll.theme) ? poll.theme : null,
+        }
       } else if (type === 'trivia') {
         if (!trivia.title.trim()) throw new Error('Give it a title')
         row = { title: trivia.title.trim(), body: trivia.body || null, cover_url: trivia.cover_url }
@@ -60,7 +66,7 @@ export default function EngageEdit() {
         : await supabase.from(table).update(row).eq('id', id)
       if (err) throw err
       toast('Saved')
-      nav('/engage', { replace: true })
+      nav('/engage', { replace: true, state: { tab: { poll: 'polls', trivia: 'trivia', game: 'games' }[type] } })
     } catch (err) {
       setError(err.message)
     } finally {
@@ -98,22 +104,41 @@ export default function EngageEdit() {
         {type === 'poll' && (
           <>
             <div className="scroll-x">
-              {[['single', 'Single choice'], ['multi', 'Multi select'], ['rating', 'Rating']].map(([k, l]) => (
-                <button type="button" key={k} className={`chip ${poll.kind === k ? 'on' : ''}`} onClick={() => setPoll((p) => ({ ...p, kind: k }))}>{l}</button>
+              {[['versus', 'This or that'], ['single', 'Single choice'], ['multi', 'Multi select'], ['rating', 'Rating']].map(([k, l]) => (
+                <button type="button" key={k} className={`chip ${poll.kind === k ? 'on' : ''}`}
+                  onClick={() => setPoll((p) => ({ ...p, kind: k, options: k === 'versus' ? [p.options[0] || '', p.options[1] || ''] : p.options.length < 4 ? [...p.options, '', '', '', ''].slice(0, 4) : p.options }))}>{l}</button>
               ))}
             </div>
             <Field label="Question" htmlFor="p-q"><input id="p-q" className="input" value={poll.question} onChange={(e) => setPoll((p) => ({ ...p, question: e.target.value }))} /></Field>
             {poll.kind !== 'rating' && (
               <>
                 {poll.options.map((o, i) => (
-                  <Field key={i} label={`Option ${i + 1}`} htmlFor={`p-o${i}`}><input id={`p-o${i}`} className="input" value={o} onChange={(e) => setOpt(i, e.target.value)} /></Field>
+                  <Field key={i} label={poll.kind === 'versus' ? (i === 0 ? 'Left choice' : 'Right choice') : `Option ${i + 1}`} htmlFor={`p-o${i}`}><input id={`p-o${i}`} className="input" value={o} onChange={(e) => setOpt(i, e.target.value)} /></Field>
                 ))}
-                <button type="button" className="chip" style={{ alignSelf: 'flex-start' }} onClick={() => setPoll((p) => ({ ...p, options: [...p.options, ''] }))}>+ Add option</button>
+                {poll.kind !== 'versus' && <button type="button" className="chip" style={{ alignSelf: 'flex-start' }} onClick={() => setPoll((p) => ({ ...p, options: [...p.options, ''] }))}>+ Add option</button>}
               </>
             )}
             {poll.kind === 'multi' && (
               <Field label="Max picks" htmlFor="p-max"><input id="p-max" type="number" min="2" className="input" value={poll.max_choices} onChange={(e) => setPoll((p) => ({ ...p, max_choices: e.target.value }))} /></Field>
             )}
+            <div className="field">
+              <div className="label">Colour</div>
+              <div className="scroll-x">
+                <button type="button" className={`chip ${poll.theme == null ? 'on' : ''}`} onClick={() => setPoll((p) => ({ ...p, theme: null }))}>Auto</button>
+                {THEMES.map(([a, b], k) => (
+                  <button type="button" key={k} aria-label={`Colour ${k + 1}`} onClick={() => setPoll((p) => ({ ...p, theme: k }))}
+                    style={{ width: 40, height: 40, borderRadius: '50%', border: 0, flexShrink: 0, background: `linear-gradient(135deg, ${a}, ${b})`, outline: poll.theme === k ? '3px solid var(--ink)' : 'none', outlineOffset: 2 }} />
+                ))}
+              </div>
+            </div>
+            <label className="row">
+              <input type="checkbox" checked={!!poll.on_home} onChange={(e) => setPoll((p) => ({ ...p, on_home: e.target.checked }))} style={{ width: 22, height: 22, accentColor: '#b08a2a' }} />
+              Show the results on the Home page
+            </label>
+            <label className="row">
+              <input type="checkbox" checked={!!poll.in_story} onChange={(e) => setPoll((p) => ({ ...p, in_story: e.target.checked }))} style={{ width: 22, height: 22, accentColor: '#b08a2a' }} />
+              Add this poll to Stories (guests answer inside the story)
+            </label>
             <label className="row">
               <input type="checkbox" checked={poll.is_open} onChange={(e) => setPoll((p) => ({ ...p, is_open: e.target.checked }))} style={{ width: 22, height: 22, accentColor: '#b08a2a' }} />
               Voting is open

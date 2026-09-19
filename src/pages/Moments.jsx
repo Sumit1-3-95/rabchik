@@ -9,7 +9,7 @@ import UploadSheet from '../components/UploadSheet'
 import Icon from '../components/Icon'
 
 export default function Moments() {
-  const { session, canPost } = useAuth()
+  const { session, canUpload } = useAuth()
   const uid = session.user.id
   const [filter, setFilter] = useState('all') // all | <date> | videos | mine
   const [viewer, setViewer] = useState(null) // { items, i }
@@ -47,14 +47,14 @@ export default function Moments() {
     }
     return [...by.entries()]
       .map(([k, items]) => ({ key: k, ev: evById.get(k), items }))
-      .sort((a, b) => (a.ev ? events.indexOf(a.ev) : 999) - (b.ev ? events.indexOf(b.ev) : 999))
+      .sort((a, b) => (a.ev ? events.indexOf(a.ev) : -1) - (b.ev ? events.indexOf(b.ev) : -1))
   }, [filtered, evById, events])
 
   return (
     <main className="page tight">
       <div className="row between">
         <h1 className="title">Moments</h1>
-        {canPost && <button className="round glass" aria-label="Add photo or video" onClick={() => setUpload(true)}><Icon name="plus" stroke={2} /></button>}
+        {canUpload && <button className="round glass" aria-label="Add photo or video" onClick={() => setUpload(true)}><Icon name="plus" stroke={2} /></button>}
       </div>
 
       <div className="scroll-x">
@@ -64,13 +64,14 @@ export default function Moments() {
         <button className={`chip ${filter === 'mine' ? 'on' : ''}`} onClick={() => setFilter('mine')}>Mine</button>
       </div>
 
+      {q.error && <div className="err">Photos could not load: {q.error.message}</div>}
       {q.loading && <div className="spinner" />}
-      {!q.loading && filtered.length === 0 && <div className="empty">Nothing here yet.{canPost ? ' Tap + to add the first one.' : ''}</div>}
+      {!q.loading && filtered.length === 0 && <div className="empty">Nothing here yet.{canUpload ? ' Tap + to add the first one.' : ''}</div>}
 
       {sections.map((s) => (
         <section key={s.key} className="col" style={{ gap: 10 }}>
           <div className="row between" style={{ alignItems: 'baseline' }}>
-            <h2 className="h2" style={{ fontSize: 19 }}>{s.ev?.title || 'Other'}</h2>
+            <h2 className="h2" style={{ fontSize: 19 }}>{s.ev?.title || 'Shared by guests'}</h2>
             <span className="small muted">{s.ev ? dayLabel(s.ev.event_date) : ''}</span>
           </div>
           <div className="grid3">

@@ -33,6 +33,7 @@ function Drawer({ open, onClose }) {
             <button className="item" onClick={() => go('/admin/events/new')}><Icon name="cal" /> Add event card</button>
             <button className="item" onClick={() => go('/admin/engage/poll/new')}><Icon name="poll" /> Add poll, trivia or game</button>
             <button className="item" onClick={() => go('/admin/guests')}><Icon name="users" /> Guests &amp; PINs</button>
+            <button className="item" onClick={() => go('/admin/admins')}><Icon name="user" /> Manage admins</button>
           </>
         )}
         <div style={{ flex: 1 }} />

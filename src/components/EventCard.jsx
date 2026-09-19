@@ -5,7 +5,7 @@ import { mediaUrl } from '../lib/supabase'
 import Icon from './Icon'
 
 export default function EventCard({ event, onAdd }) {
-  const { isAdmin, canPost } = useAuth()
+  const { isAdmin, canUpload } = useAuth()
   const img = mediaUrl(event.display_image_url || event.banner_urls?.[0])
   return (
     <div className="ecard">
@@ -16,7 +16,7 @@ export default function EventCard({ event, onAdd }) {
           <div className="small muted">{[event.time_label, event.venue].filter(Boolean).join(' · ')}</div>
         </div>
       </Link>
-      {canPost && (
+      {canUpload && (
         <button className="round glass add" aria-label={`Add photos or videos to ${event.title}`} onClick={() => onAdd(event.id)}>
           <Icon name="plus" stroke={2} />
         </button>
