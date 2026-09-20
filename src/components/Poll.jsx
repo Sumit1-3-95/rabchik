@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Component, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { toast, useQuery } from '../lib/hooks'
@@ -187,7 +187,20 @@ export function PollCard({ poll, index, res, mine, uid, isAdmin, onVoted, onTogg
 }
 
 /* ---------------- full-screen story slide ---------------- */
-export function PollStage({ item, uid, onAnswered }) {
+class Boundary extends Component {
+  state = { err: null }
+  static getDerivedStateFromError(err) { return { err } }
+  render() {
+    if (this.state.err) return <div className="pstage" style={{ background: '#3b3320' }}><h2 className="pq">This poll could not be shown</h2><div className="small">{String(this.state.err.message || this.state.err)}</div></div>
+    return this.props.children
+  }
+}
+
+export function PollStage(props) {
+  return <Boundary><PollStageInner {...props} /></Boundary>
+}
+
+function PollStageInner({ item, uid, onAnswered }) {
   const { poll, res, mine } = item
   const stop = (e) => e.stopPropagation()
   return (
@@ -210,56 +223,69 @@ function ResultCard({ poll, index, res, mine }) {
     const p0 = pctOf(res, 0)
     body = (
       <>
-        <div className="row between rvs">
-          <div><b style={{ color: VS_COLORS[0][1] }}>{opts[0]}</b><span style={{ color: VS_COLORS[0][1] }}>{p0}%</span></div>
-          <div style={{ textAlign: 'right' }}><b style={{ color: VS_COLORS[1][1] }}>{opts[1]}</b><span style={{ color: VS_COLORS[1][1] }}>{voters ? 100 - p0 : 0}%</span></div>
+        <div className="rvs2">
+          <div><span className="rn">{opts[0]}</span><span className="rp">{p0}%</span></div>
+          <div><span className="rn">{opts[1]}</span><span className="rp">{voters ? 100 - p0 : 0}%</span></div>
         </div>
-        <div className="vsbar" aria-hidden="true">
-          <i style={{ width: `${voters ? p0 : 50}%`, background: VS_COLORS[0][0] }} />
-          <i style={{ width: `${voters ? 100 - p0 : 50}%`, background: VS_COLORS[1][0] }} />
+        <div className="rbar2" aria-hidden="true">
+          <i style={{ width: `${voters ? p0 : 50}%`, background: '#fff' }} />
+          <i style={{ width: `${voters ? 100 - p0 : 50}%`, background: 'rgba(255,255,255,0.45)' }} />
         </div>
       </>
     )
   } else if (poll.kind === 'rating') {
     body = (
-      <div className="row" style={{ gap: 10 }}>
-        <span style={{ fontSize: 36, fontWeight: 800, color: '#d99a00' }}>{res?.avg || '–'}</span>
-        <Icon name="star" size={26} stroke={1.5} color="#f5b301" fill="#f5b301" />
-        <span className="small muted">average</span>
+      <div className="row" style={{ gap: 12, alignItems: 'flex-end' }}>
+        <span style={{ fontSize: 52, fontWeight: 800, lineHeight: 1 }}>{res?.avg || '–'}</span>
+        <div className="col" style={{ gap: 4, paddingBottom: 6 }}>
+          <div className="row" style={{ gap: 2 }}>
+            {[1, 2, 3, 4, 5].map((n) => <Icon key={n} name="star" size={20} stroke={1.5} color="#fff" fill={(res?.avg || 0) >= n - 0.25 ? '#fff' : 'none'} />)}
+          </div>
+          <span style={{ fontSize: 13, opacity: 0.9 }}>average rating</span>
+        </div>
       </div>
     )
   } else {
-    const rows = opts.map((o, idx) => ({ o, idx, pct: pctOf(res, idx) })).sort((a, b) => b.pct - a.pct).slice(0, 4)
-    body = rows.map(({ o, idx, pct }, r) => (
-      <div key={idx} className="rrow">
-        <div className="row between"><span style={{ fontWeight: r === 0 && pct ? 700 : 500 }}>{o}</span><b style={{ color: OPT_COLORS[idx % OPT_COLORS.length] }}>{pct}%</b></div>
-        <div className="rtrack"><i style={{ width: `${pct}%`, background: OPT_COLORS[idx % OPT_COLORS.length] }} /></div>
+    const rows = opts.map((o, idx) => ({ o, idx, pct: pctOf(res, idx) })).sort((a, b) => b.pct - a.pct).slice(0, 3)
+    body = (
+      <div className="rlist">
+        {rows.map(({ o, idx, pct }, r) => (
+          <div key={idx} className={`rrow2 ${r === 0 && pct ? 'top' : ''}`}>
+            <div className="rfill" style={{ width: `${pct}%` }} />
+            <span>{r === 0 && pct ? '★ ' : ''}{o}</span><b>{pct}%</b>
+          </div>
+        ))}
       </div>
-    ))
+    )
   }
   return (
-    <Link to="/engage" state={{ tab: 'polls' }} className="rcard">
-      <div className="rstrip" style={{ background: themeGradient(poll, index) }} />
+    <Link to="/engage" state={{ tab: 'polls' }} className="rcard" style={{ background: themeGradient(poll, index) }}>
+      <div className="row between">
+        <span className="rchip"><span className="live" /> Live results</span>
+        <span className="rvotes"><Icon name="users" size={15} /> {voters}</span>
+      </div>
       <div className="rq">{poll.question}</div>
       {body}
-      <div className="small muted">{voters} vote{voters === 1 ? '' : 's'} · {mine ? 'you voted' : 'tap to vote'}</div>
+      <div className="rfoot"><span>{mine ? 'You voted ✓' : 'Tap to vote'}</span><Icon name="back" size={16} style={{ transform: 'scaleX(-1)' }} /></div>
     </Link>
   )
 }
 
 export function HomePolls({ uid }) {
   const q = useQuery(() => fetchPollData(uid, { filter: (x) => x.eq('on_home', true) }), [uid])
+  const [active, setActive] = useState(0)
   const polls = q.data?.polls || []
   if (!polls.length) return null
   return (
-    <section className="col" style={{ gap: 10, flexShrink: 0 }}>
+    <section className="col" style={{ gap: 8, flexShrink: 0 }}>
       <div className="row between">
         <div className="eyebrow">Poll results</div>
         <Link to="/engage" className="small" style={{ color: 'var(--accent)', fontWeight: 700 }}>Play along</Link>
       </div>
-      <div className="hres">
+      <div className="hres" onScroll={(e) => setActive(Math.round(e.currentTarget.scrollLeft / (e.currentTarget.clientWidth + 12)))}>
         {polls.map((p, i) => <ResultCard key={p.id} poll={p} index={i} res={q.data.res.get(p.id)} mine={q.data.mine.get(p.id)} />)}
       </div>
+      {polls.length > 1 && <div className="rdots" aria-hidden="true">{polls.map((p, i) => <i key={p.id} className={i === active ? 'on' : ''} />)}</div>}
     </section>
   )
 }

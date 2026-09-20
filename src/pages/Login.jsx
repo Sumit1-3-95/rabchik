@@ -33,26 +33,24 @@ export default function Login() {
     }
   }
 
+  const alreadyHasAccount = /already/i.test(error)
+
   return (
     <main className="login">
-      <div className="blob" style={{ top: -80, left: -60, width: 300, height: 300, background: 'var(--rose)', opacity: 0.5 }} />
-      <div className="blob" style={{ bottom: -60, right: -60, width: 300, height: 300, background: 'var(--gold)', opacity: 0.25 }} />
-
-      <div className="arch">
-        {/* Swap these for the caricatures: put bride.png / groom.png in /public and use <img src="/bride.png" /> */}
-        <div className="slot" style={{ marginRight: -8 }}>Bride<br />caricature</div>
-        <div className="slot">Groom<br />caricature</div>
+      <div className="lg-top">
+        <div className="kicker">Save the date</div>
+        <h1 className="names">Anushika <em>weds</em> Saurabh</h1>
+        <div className="small" style={{ color: '#5b4a2a' }}>Dec 10–11, 2026 · Jaipur · <b>#rabchik</b></div>
       </div>
 
-      <div className="col" style={{ gap: 10, textAlign: 'center' }}>
-        <h1 className="names">Saurabh <em>&amp;</em> Anushika</h1>
-        <div className="logo" style={{ padding: 0 }}>RABCHIK</div>
-        <div className="small muted">Dec 10–11, 2026 · Jaipur</div>
-      </div>
+      <img className="couple" src="/couple.webp" alt="" width="560" height="830" draggable="false" />
 
-      <div style={{ flex: 1 }} />
+      <form className="card glass col lg-card" onSubmit={submit}>
+        <div className="seg" role="tablist" aria-label="Log in or sign up">
+          <button type="button" role="tab" aria-selected={!isSignup} className={!isSignup ? 'on' : ''} onClick={() => switchMode('login')}>Log in</button>
+          <button type="button" role="tab" aria-selected={isSignup} className={isSignup ? 'on' : ''} onClick={() => switchMode('signup')}>Sign up</button>
+        </div>
 
-      <form className="card glass col pad" style={{ padding: 18 }} onSubmit={submit}>
         <div className="field">
           <label className="label" htmlFor="phone">Phone number</label>
           <input id="phone" className="input" type="tel" inputMode="numeric" autoComplete="tel" placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value)} />
@@ -77,15 +75,25 @@ export default function Login() {
           <label className="label" htmlFor="pin">{isSignup ? 'Create a 4-digit PIN' : 'PIN'}</label>
           <input id="pin" className="input" type="password" inputMode="numeric" autoComplete={isSignup ? 'new-password' : 'current-password'} maxLength={4} placeholder="4 digits" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} />
         </div>
-        {error && <div className="err" role="alert">{error}</div>}
-        <button className="btn" disabled={busy}>{busy ? 'Please wait…' : isSignup ? 'Sign up' : 'Enter'}</button>
-      </form>
-      <div className="small muted" style={{ textAlign: 'center' }}>
-        {isSignup ? 'Already have an account? ' : 'New here? '}
-        <button type="button" onClick={() => switchMode(isSignup ? 'login' : 'signup')} style={{ background: 'none', border: 0, padding: 0, font: 'inherit', fontWeight: 700, color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
-          {isSignup ? 'Log in' : 'Sign up'}
+
+        {error && (
+          <div className="errbox" role="alert">
+            <div>{error}</div>
+            <div className="row" style={{ gap: 8 }}>
+              {!isSignup && <button type="button" className="errcta" onClick={() => switchMode('signup')}>New here? Sign up</button>}
+              {isSignup && alreadyHasAccount && <button type="button" className="errcta" onClick={() => switchMode('login')}>Log in instead</button>}
+              {isSignup && !alreadyHasAccount && <button type="button" className="errcta" onClick={() => switchMode('login')}>Have an account? Log in</button>}
+            </div>
+          </div>
+        )}
+
+        <button className="btn" disabled={busy}>{busy ? 'Please wait…' : isSignup ? 'Create my account' : 'Enter'}</button>
+
+        <div className="or"><span>or</span></div>
+        <button type="button" className="btn ghost" onClick={() => switchMode(isSignup ? 'login' : 'signup')}>
+          {isSignup ? 'I already have an account · Log in' : 'New here? Create an account'}
         </button>
-      </div>
+      </form>
     </main>
   )
 }

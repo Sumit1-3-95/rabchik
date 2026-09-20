@@ -10,10 +10,12 @@ export default function EventCard({ event, onAdd }) {
   return (
     <div className="ecard">
       <Link to={`/events/${event.id}`} className="body">
-        <div className="img" style={{ backgroundImage: img ? `url(${img})` : gradient(event.theme_colors) }} />
+        <div className="img" style={{ backgroundImage: img ? `url(${img})` : gradient(event.theme_colors) }}>
+          {event.time_label && <span className="tchip glass"><Icon name="clock" size={14} stroke={2.2} />{event.time_label}</span>}
+        </div>
         <div className="meta">
           <div className="name">{event.title}</div>
-          <div className="small muted">{[event.time_label, event.venue].filter(Boolean).join(' · ')}</div>
+          {event.venue && <div className="small muted row" style={{ gap: 6 }}><Icon name="pin" size={14} />{event.venue}</div>}
         </div>
       </Link>
       {canUpload && (

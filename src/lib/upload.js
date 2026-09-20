@@ -64,19 +64,58 @@ export async function checkFile(file) {
   throw new Error(`"${file.name}" is not a photo or video`)
 }
 
-/** Uploads a file into the media bucket. Returns the storage path. */
+function videoPoster(file, maxDim = 400) {
+  return new Promise((resolve) => {
+    const u = URL.createObjectURL(file)
+    const v = document.createElement('video')
+    const done = (b) => { URL.revokeObjectURL(u); resolve(b) }
+    const t = setTimeout(() => done(null), 8000)
+    v.muted = true; v.playsInline = true; v.preload = 'auto'
+    v.onloadeddata = () => { v.currentTime = Math.min(0.5, (v.duration || 1) / 2) }
+    v.onseeked = () => {
+      try {
+        const sc = Math.min(1, maxDim / Math.max(v.videoWidth, v.videoHeight))
+        const c = document.createElement('canvas')
+        c.width = Math.round(v.videoWidth * sc); c.height = Math.round(v.videoHeight * sc)
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height)
+        c.toBlob((b) => { clearTimeout(t); done(b) }, 'image/jpeg', 0.75)
+      } catch { clearTimeout(t); done(null) }
+    }
+    v.onerror = () => { clearTimeout(t); done(null) }
+    v.src = u
+  })
+}
+
+async function putWithRetry(path, body, opts, tries = 3) {
+  let last
+  for (let n = 0; n < tries; n++) {
+    const { error } = await supabase.storage.from('media').upload(path, body, opts)
+    if (!error) return
+    last = error
+    await new Promise((r) => setTimeout(r, 600 * (n + 1)))
+  }
+  throw new Error(`Upload failed: ${last.message}`)
+}
+
+/**
+ * Uploads a file into the media bucket. Returns the storage path.
+ * Also stores a small 400px preview as "t_<name>.jpg" beside it so galleries load fast (best effort).
+ */
 export async function uploadFile(file, folder) {
   const isImage = file.type.startsWith('image/') || isHeic(file)
   let body = file
   let type = file.type
   let ext = (file.name.split('.').pop() || 'mp4').toLowerCase()
   if (isImage) ({ blob: body, type, ext } = await prepareImage(file))
-  const path = `${folder}/${crypto.randomUUID()}.${ext}`
-  const { error } = await supabase.storage.from('media').upload(path, body, { contentType: type || undefined, cacheControl: '31536000' })
-  if (error) throw new Error(`Upload failed: ${error.message}`)
-  // Only a warning in the console: a slow CDN or a blocked HEAD request must never lose an upload.
-  fetch(mediaUrl(path), { method: 'HEAD' })
-    .then((res) => { if (!res.ok) console.warn(`Uploaded, but the photo URL answered ${res.status}. Is the "media" bucket public?`) })
-    .catch(() => {})
+  const id = crypto.randomUUID()
+  const path = `${folder}/${id}.${ext}`
+  const cc = { contentType: type || undefined, cacheControl: '31536000' }
+  await putWithRetry(path, body, cc)
+  try {
+    const thumb = isImage ? (await prepareImage(file, 400, 0.72)).blob : await videoPoster(file)
+    if (thumb && thumb.type === 'image/jpeg') {
+      await putWithRetry(`${folder}/t_${id}.jpg`, thumb, { contentType: 'image/jpeg', cacheControl: '31536000' }, 2)
+    }
+  } catch (e) { console.warn('preview not created', e) }
   return path
 }

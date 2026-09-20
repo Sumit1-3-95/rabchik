@@ -8,6 +8,7 @@ import { MEDIA_SELECT, fetchMyLikes, normMedia } from '../lib/media'
 import StoryViewer from '../components/StoryViewer'
 import UploadSheet from '../components/UploadSheet'
 import Icon from '../components/Icon'
+import Tile from '../components/Tile'
 
 export default function EventDetail() {
   const { id } = useParams()
@@ -56,21 +57,35 @@ export default function EventDetail() {
       <div className="sheet-top">
         <div className="col">
           <h1 className="title" style={{ fontSize: 34, lineHeight: 1 }}>{ev.title}</h1>
-          <div className="scroll-x">
-            <span className="chip"><Icon name="clock" size={15} />{dayLabel(ev.event_date)}{ev.time_label ? ` · ${ev.time_label}` : ''}</span>
+          <div className="scroll-x" style={{ alignItems: 'flex-start', gap: 14 }}>
+            <div className="cwrap">
+              <span className="chip"><Icon name="clock" size={15} />{dayLabel(ev.event_date)}{ev.time_label ? ` · ${ev.time_label}` : ''}</span>
+              <span className="clabel">Date &amp; time</span>
+            </div>
             {ev.venue && (
-              ev.maps_url
-                ? <a className="chip link" href={ev.maps_url} target="_blank" rel="noreferrer"><Icon name="pin" size={15} />{ev.venue}</a>
-                : <span className="chip"><Icon name="pin" size={15} />{ev.venue}</span>
+              <div className="cwrap">
+                {ev.maps_url
+                  ? <a className="chip link" href={ev.maps_url} target="_blank" rel="noreferrer"><Icon name="pin" size={15} />{ev.venue}</a>
+                  : <span className="chip"><Icon name="pin" size={15} />{ev.venue}</span>}
+                <span className="clabel">{ev.maps_url ? 'Location · tap for map' : 'Location'}</span>
+              </div>
             )}
-            {ev.dress_code && <span className="chip">{ev.dress_code}</span>}
+            {ev.dress_code && (
+              <div className="cwrap">
+                <span className="chip">{ev.dress_code}</span>
+                <span className="clabel">Dress code</span>
+              </div>
+            )}
             {ev.theme_label && (
-              <span className="chip">
-                {(ev.theme_colors || []).slice(0, 2).map((c, i) => (
-                  <span key={i} style={{ width: 14, height: 14, borderRadius: 7, background: c, marginLeft: i ? -8 : 0 }} />
-                ))}
-                {ev.theme_label}
-              </span>
+              <div className="cwrap">
+                <span className="chip">
+                  {(ev.theme_colors || []).slice(0, 2).map((c, i) => (
+                    <span key={i} style={{ width: 14, height: 14, borderRadius: 7, background: c, marginLeft: i ? -8 : 0 }} />
+                  ))}
+                  {ev.theme_label}
+                </span>
+                <span className="clabel">Colour theme</span>
+              </div>
             )}
           </div>
         </div>
@@ -117,10 +132,7 @@ export default function EventDetail() {
           ) : (
             <div className="grid4">
               {media.slice(0, 12).map((m, i) => (
-                <button key={m.id} className="tile" aria-label="Open photo" onClick={() => setViewer(i)}
-                  style={m.kind === 'image' ? { backgroundImage: `url(${m.url})` } : undefined}>
-                  {m.kind === 'video' && <><video src={`${m.url}#t=0.1`} preload="metadata" muted playsInline /><span className="play glass"><Icon name="play" size={11} fill="currentColor" /></span></>}
-                </button>
+                <Tile key={m.id} m={m} onClick={() => setViewer(i)} />
               ))}
             </div>
           )}

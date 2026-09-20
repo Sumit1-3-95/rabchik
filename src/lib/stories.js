@@ -17,13 +17,14 @@ export function useStories(events) {
 
   const q = useQuery(async () => {
     const [m, s, likes, pollData] = await Promise.all([
-      supabase.from('media').select(MEDIA_SELECT).eq('is_story', true).order('created_at', { ascending: true }),
+      supabase.from('media').select(MEDIA_SELECT).eq('is_story', true).order('created_at', { ascending: false }).limit(200),
       supabase.from('story_views').select('media_id').eq('user_id', uid),
       fetchMyLikes(uid),
       fetchPollData(uid, { filter: (x) => x.eq('in_story', true) }).catch(() => ({ polls: [], res: new Map(), mine: new Map() })),
     ])
     if (m.error) throw m.error
-    return { media: m.data, seen: new Set((s.data || []).map((r) => r.media_id)), likes, pollData }
+    return { media: [...m.data].reverse(), // newest 200 only, shown oldest to newest
+       seen: new Set((s.data || []).map((r) => r.media_id)), likes, pollData }
   }, [uid])
 
   const groups = useMemo(() => {
@@ -46,25 +47,30 @@ export function useStories(events) {
         items,
         unseen: firstUnseen !== -1,
         firstUnseen: Math.max(0, firstUnseen),
+        unseenCount: items.filter((it) => !isSeen(it.id)).length,
+        latest: Math.max(...items.map((it) => +new Date(it.createdAt))),
         cover: [...items].reverse().find((i) => i.kind === 'image')?.url || null,
+        coverThumb: [...items].reverse().find((i) => i.kind === 'image')?.thumb || null,
         gradient: gradient(ev?.theme_colors),
         order: ev ? ev.sort : 999,
       }
     })
     // polls that admins marked "add to Stories" become one extra circle; unanswered = unseen
-    if (pollData?.polls.length) {
-      const items = pollData.polls.map((p) => ({
+    // only polls that are still open and not answered yet; answered polls disappear
+    const openPolls = (pollData?.polls || []).filter((p) => p.is_open !== false && !pollData.mine.has(p.id))
+    if (openPolls.length) {
+      const items = openPolls.map((p) => ({
         id: `poll:${p.id}`, kind: 'poll', poll: p, res: pollData.res.get(p.id), mine: pollData.mine.get(p.id),
-        voted: pollData.mine.has(p.id), name: 'Rabchik', createdAt: p.created_at,
+        voted: false, name: 'Rabchik', createdAt: p.created_at,
         likeCount: 0, commentCount: 0, liked: false, uploader: null, url: null, caption: null,
       }))
-      const firstUnseen = items.findIndex((it) => !it.voted)
       out.push({
-        key: 'polls', label: 'Polls', items, isPoll: true, unseen: firstUnseen !== -1,
-        firstUnseen: Math.max(0, firstUnseen), cover: null, gradient: themeGradient(pollData.polls[0]), order: -1,
+        key: 'polls', label: 'Polls', items, isPoll: true, unseen: true, unseenCount: items.length,
+        firstUnseen: 0, latest: Infinity, cover: null, gradient: themeGradient(openPolls[0]), order: -1,
       })
     }
-    out.sort((a, b) => Number(b.unseen) - Number(a.unseen) || a.order - b.order)
+    // unseen first (polls on top), then the most recently posted; fully seen circles go to the end
+    out.sort((a, b) => Number(b.unseen) - Number(a.unseen) || b.latest - a.latest || a.order - b.order)
     return out
   }, [q.data, events, localSeen])
 

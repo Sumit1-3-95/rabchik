@@ -1,18 +1,19 @@
+import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './lib/auth'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import SetPin from './pages/SetPin'
 import Home from './pages/Home'
-import EventDetail from './pages/EventDetail'
-import Moments from './pages/Moments'
-import Engage from './pages/Engage'
-import Profile from './pages/Profile'
-import Settings from './pages/Settings'
-import EventEdit from './pages/admin/EventEdit'
-import EngageEdit from './pages/admin/EngageEdit'
-import Guests from './pages/admin/Guests'
-import Admins from './pages/admin/Admins'
+const EventDetail = lazy(() => import('./pages/EventDetail'))
+const Moments = lazy(() => import('./pages/Moments'))
+const Engage = lazy(() => import('./pages/Engage'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Settings = lazy(() => import('./pages/Settings'))
+const EventEdit = lazy(() => import('./pages/admin/EventEdit'))
+const EngageEdit = lazy(() => import('./pages/admin/EngageEdit'))
+const Guests = lazy(() => import('./pages/admin/Guests'))
+const Admins = lazy(() => import('./pages/admin/Admins'))
 
 function Splash() {
   return <div className="app"><div className="spinner" aria-label="Loading" /></div>
@@ -42,6 +43,7 @@ function Protected({ children, admin = false }) {
 export default function App() {
   const { session, profile, loading } = useAuth()
   return (
+    <Suspense fallback={<Splash />}>
     <Routes>
       <Route path="/login" element={loading ? <Splash /> : session && profile ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/set-pin" element={loading ? <Splash /> : !session ? <Navigate to="/login" replace /> : <SetPin />} />
@@ -59,5 +61,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }

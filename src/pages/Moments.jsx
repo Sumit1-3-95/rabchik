@@ -7,6 +7,7 @@ import { MEDIA_SELECT, fetchMyLikes, normMedia } from '../lib/media'
 import StoryViewer from '../components/StoryViewer'
 import UploadSheet from '../components/UploadSheet'
 import Icon from '../components/Icon'
+import Tile from '../components/Tile'
 
 export default function Moments() {
   const { session, canUpload } = useAuth()
@@ -14,6 +15,7 @@ export default function Moments() {
   const [filter, setFilter] = useState('all') // all | <date> | videos | mine
   const [viewer, setViewer] = useState(null) // { items, i }
   const [upload, setUpload] = useState(false)
+  const [limit, setLimit] = useState(120) // show in pages so a big gallery stays fast
 
   const q = useQuery(async () => {
     const [events, media, likes] = await Promise.all([
@@ -40,7 +42,7 @@ export default function Moments() {
   // section per event (in schedule order), plus "Other" for uploads without an event
   const sections = useMemo(() => {
     const by = new Map()
-    for (const m of filtered) {
+    for (const m of filtered.slice(0, limit)) {
       const k = m.eventId || 'none'
       if (!by.has(k)) by.set(k, [])
       by.get(k).push(m)
@@ -48,7 +50,7 @@ export default function Moments() {
     return [...by.entries()]
       .map(([k, items]) => ({ key: k, ev: evById.get(k), items }))
       .sort((a, b) => (a.ev ? events.indexOf(a.ev) : -1) - (b.ev ? events.indexOf(b.ev) : -1))
-  }, [filtered, evById, events])
+  }, [filtered, evById, events, limit])
 
   return (
     <main className="page tight">
@@ -76,20 +78,15 @@ export default function Moments() {
           </div>
           <div className="grid3">
             {s.items.map((m) => (
-              <button key={m.id} className="tile" aria-label={`Open ${m.kind}`}
-                onClick={() => setViewer({ items: filtered, i: filtered.indexOf(m) })}
-                style={m.kind === 'image' ? { backgroundImage: `url(${m.url})` } : undefined}>
-                {m.kind === 'video' && (
-                  <>
-                    <video src={`${m.url}#t=0.1`} preload="metadata" muted playsInline />
-                    <span className="play glass"><Icon name="play" size={11} fill="currentColor" /></span>
-                  </>
-                )}
-              </button>
+              <Tile key={m.id} m={m} onClick={() => setViewer({ items: filtered, i: filtered.indexOf(m) })} />
             ))}
           </div>
         </section>
       ))}
+
+      {filtered.length > limit && (
+        <button className="btn ghost" onClick={() => setLimit((l) => l + 120)}>Show more ({filtered.length - limit} left)</button>
+      )}
 
       {viewer && (
         <StoryViewer

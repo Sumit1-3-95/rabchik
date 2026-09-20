@@ -8,6 +8,14 @@ export async function fetchMyLikes(userId) {
   return new Set((data || []).map((r) => r.media_id))
 }
 
+/** Small preview path: uploads made by this version store a 400px copy as "t_<name>.jpg" next to the original. */
+export function thumbPath(path) {
+  if (!path || path.startsWith('http')) return null
+  const i = path.lastIndexOf('/')
+  const base = path.slice(i + 1).replace(/\.[^.]+$/, '')
+  return `${path.slice(0, i + 1)}t_${base}.jpg`
+}
+
 /** Shape a DB row for the UI */
 export function normMedia(m, myLikes = new Set()) {
   return {
@@ -16,6 +24,7 @@ export function normMedia(m, myLikes = new Set()) {
     kind: m.kind,
     path: m.path,
     url: mediaUrl(m.path),
+    thumb: mediaUrl(thumbPath(m.path)),
     caption: m.caption,
     isStory: m.is_story,
     createdAt: m.created_at,
@@ -28,7 +37,7 @@ export function normMedia(m, myLikes = new Set()) {
 }
 
 export async function deleteMedia(item) {
-  await supabase.storage.from('media').remove([item.path])
+  await supabase.storage.from('media').remove([item.path, thumbPath(item.path)].filter(Boolean))
   const { error } = await supabase.from('media').delete().eq('id', item.id)
   if (error) throw error
 }
