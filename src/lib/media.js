@@ -4,6 +4,7 @@ export const MEDIA_SELECT =
   'id,event_id,kind,path,caption,is_story,created_at,uploader,profiles!uploader(name),media_likes(count),media_comments(count)'
 
 export async function fetchMyLikes(userId) {
+  if (!userId) return new Set()
   const { data } = await supabase.from('media_likes').select('media_id').eq('user_id', userId)
   return new Set((data || []).map((r) => r.media_id))
 }

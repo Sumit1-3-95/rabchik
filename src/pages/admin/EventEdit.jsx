@@ -5,10 +5,11 @@ import { useQuery, toast } from '../../lib/hooks'
 import { uploadFile } from '../../lib/upload'
 import { Field, ImageInput } from '../../components/Field'
 import Icon from '../../components/Icon'
+import { SITE } from '../../config'
 
 const EMPTY = {
   title: '', event_date: '2026-12-10', time_label: '', venue: 'Riddhi Resorts',
-  maps_url: 'https://maps.app.goo.gl/7D9BzL3FJKqoQxL7', dress_code: '', theme_label: '',
+  maps_url: SITE.mapsUrl, dress_code: '', theme_label: '',
   theme_colors: ['#F4DE94', '#C9A227'], display_image_url: null, background_url: null,
   banner_urls: [], menu_items: [], expect: '', trivia: '', sort: 0, published: true,
 }
@@ -67,14 +68,14 @@ export default function EventEdit() {
     setBusy(false)
     if (err) return setError(err.message)
     toast('Saved')
-    nav('/', { replace: true, state: { day: f.event_date } })
+    nav('/events', { replace: true, state: { day: f.event_date } })
   }
 
   const remove = async () => {
     if (!confirm(`Delete "${f.title}"? Photos uploaded to it stay in Moments.`)) return
     const { error: err } = await supabase.from('events').delete().eq('id', id)
     if (err) return setError(err.message)
-    nav('/', { replace: true })
+    nav('/events', { replace: true })
   }
 
   if (q.loading) return <div className="spinner" />

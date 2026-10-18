@@ -5,17 +5,19 @@ import { phoneToEmail, pinToPassword } from './phone'
 const Ctx = createContext(null)
 export const useAuth = () => useContext(Ctx)
 
+/**
+ * Three kinds of visitors:
+ *  - public (not signed in): can view everything
+ *  - admin  (DB role "friend"): can also upload photos/videos, like and comment
+ *  - super admin (DB role "admin"): can also edit event cards and manage the team
+ */
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined) // undefined = still loading
   const [profile, setProfile] = useState(null)
   const [profileReady, setProfileReady] = useState(false)
 
   const loadProfile = useCallback(async (uid) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id,name,role,room_no,side,must_change_pin')
-      .eq('id', uid)
-      .maybeSingle()
+    const { data } = await supabase.from('profiles').select('id,name,role').eq('id', uid).maybeSingle()
     setProfile(data)
     setProfileReady(true)
   }, [])
@@ -26,7 +28,6 @@ export function AuthProvider({ children }) {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  // 'loading' → 'none' (signed out) or the user id; re-runs whenever that changes
   const sessionKey = session === undefined ? 'loading' : session?.user?.id || 'none'
   useEffect(() => {
     if (sessionKey === 'loading') return
@@ -49,27 +50,7 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  // The database trigger (supabase/signup.sql) creates the profile from this metadata.
-  const signUp = useCallback(async ({ phone, name, pin, side }) => {
-    const email = phoneToEmail(phone)
-    const password = pinToPassword(pin)
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name, side } } })
-    if (error) throw new Error(error.message)
-    // A repeat sign-up for an existing number returns a user with no identities.
-    if (data.user && data.user.identities && data.user.identities.length === 0) {
-      throw new Error('This number already has an account. Please log in.')
-    }
-    if (!data.session) await signIn(phone, pin)
-  }, [signIn])
-
   const signOut = useCallback(() => supabase.auth.signOut(), [])
-
-  const changePin = useCallback(async (newPin) => {
-    const { error } = await supabase.auth.updateUser({ password: pinToPassword(newPin) })
-    if (error) throw new Error(error.message)
-    await supabase.rpc('mark_pin_changed')
-    await loadProfile(session.user.id)
-  }, [session?.user?.id, loadProfile])
 
   const value = useMemo(() => {
     const role = profile?.role
@@ -77,16 +58,13 @@ export function AuthProvider({ children }) {
       session,
       profile,
       loading: session === undefined || !profileReady,
-      isAdmin: role === 'admin',
-      canPost: role === 'admin' || role === 'friend',
-      canUpload: !!role, // every guest can share photos and videos
+      isSuper: role === 'admin', // edit event cards, manage the team
+      canUpload: role === 'admin' || role === 'friend', // upload, like, comment
+      roleLabel: role === 'admin' ? 'Super admin' : role === 'friend' ? 'Admin' : null,
       signIn,
-      signUp,
       signOut,
-      changePin,
-      reload: () => session?.user && loadProfile(session.user.id),
     }
-  }, [session, profile, profileReady, signIn, signUp, signOut, changePin, loadProfile])
+  }, [session, profile, profileReady, signIn, signOut])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

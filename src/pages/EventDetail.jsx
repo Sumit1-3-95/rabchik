@@ -13,7 +13,7 @@ import Tile from '../components/Tile'
 export default function EventDetail() {
   const { id } = useParams()
   const nav = useNavigate()
-  const { isAdmin, canUpload, session } = useAuth()
+  const { isSuper, canUpload, session } = useAuth()
   const [slide, setSlide] = useState(0)
   const [viewer, setViewer] = useState(null)
   const [upload, setUpload] = useState(false)
@@ -23,7 +23,7 @@ export default function EventDetail() {
     const [ev, media, likes] = await Promise.all([
       supabase.from('events').select('*').eq('id', id).maybeSingle(),
       supabase.from('media').select(MEDIA_SELECT).eq('event_id', id).order('created_at', { ascending: false }).limit(60),
-      fetchMyLikes(session.user.id),
+      fetchMyLikes(session?.user?.id),
     ])
     if (ev.error) throw ev.error
     return { event: ev.data, media: (media.data || []).map((m) => normMedia(m, likes)) }
@@ -46,7 +46,7 @@ export default function EventDetail() {
           {slides.map((bg, i) => <div key={i} className="slide" style={{ backgroundImage: bg }} />)}
         </div>
         <button className="round glass back" onClick={() => nav(-1)} aria-label="Back"><Icon name="back" /></button>
-        {isAdmin && <Link to={`/admin/events/${ev.id}`} className="round glass edit" aria-label="Edit event"><Icon name="pencil" size={18} /></Link>}
+        {isSuper && <Link to={`/admin/events/${ev.id}`} className="round glass edit" aria-label="Edit event"><Icon name="pencil" size={18} /></Link>}
         {slides.length > 1 && (
           <div className="dots glass" aria-hidden="true">
             {slides.map((_, i) => <i key={i} className={i === slide ? 'on' : ''} />)}

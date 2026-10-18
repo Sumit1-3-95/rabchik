@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'favicon.png'],
       manifest: {
-        name: 'Rabchik — Saurabh & Anushika',
-        short_name: 'Rabchik',
+        name: 'Rabhchik — Saurabh & Anushika',
+        short_name: 'Rabhchik',
         description: 'Saurabh & Anushika’s wedding, all in one place.',
         theme_color: '#B08A2A',
         background_color: '#FFFDF9',

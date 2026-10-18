@@ -4,33 +4,38 @@ import { useAuth } from './auth'
 import { useQuery } from './hooks'
 import { MEDIA_SELECT, fetchMyLikes, normMedia } from './media'
 import { gradient } from './format'
-import { fetchPollData, themeGradient } from '../components/Poll'
+
+// "Seen" is remembered on this phone, so it works for visitors who are not signed in.
+const KEY = 'rabchik.seen'
+const loadSeen = () => {
+  try { return new Set(JSON.parse(localStorage.getItem(KEY) || '[]')) } catch { return new Set() }
+}
+const saveSeen = (set) => {
+  try { localStorage.setItem(KEY, JSON.stringify([...set].slice(-1500))) } catch { /* private mode: fine */ }
+}
 
 /**
  * Story circles: one circle per event (plus "Everyone" for uploads with no event).
- * Circles with unseen stories come first, like Instagram.
+ * Circles with unseen stories come first (green ring), then the most recently posted.
  */
 export function useStories(events) {
   const { session } = useAuth()
   const uid = session?.user?.id
-  const [localSeen, setLocalSeen] = useState(() => new Set())
+  const [seenSet, setSeenSet] = useState(loadSeen)
 
   const q = useQuery(async () => {
-    const [m, s, likes, pollData] = await Promise.all([
+    const [m, likes] = await Promise.all([
       supabase.from('media').select(MEDIA_SELECT).eq('is_story', true).order('created_at', { ascending: false }).limit(200),
-      supabase.from('story_views').select('media_id').eq('user_id', uid),
       fetchMyLikes(uid),
-      fetchPollData(uid, { filter: (x) => x.eq('in_story', true) }).catch(() => ({ polls: [], res: new Map(), mine: new Map() })),
     ])
     if (m.error) throw m.error
-    return { media: [...m.data].reverse(), // newest 200 only, shown oldest to newest
-       seen: new Set((s.data || []).map((r) => r.media_id)), likes, pollData }
+    return { media: [...m.data].reverse(), likes } // newest 200 only, shown oldest to newest
   }, [uid])
 
   const groups = useMemo(() => {
     if (!q.data) return []
-    const { media, seen, likes, pollData } = q.data
-    const isSeen = (id) => seen.has(id) || localSeen.has(id)
+    const { media, likes } = q.data
+    const isSeen = (id) => seenSet.has(id)
     const evMap = new Map((events || []).map((e) => [e.id, e]))
     const by = new Map()
     for (const m of media) {
@@ -41,6 +46,7 @@ export function useStories(events) {
     const out = [...by.entries()].map(([k, items]) => {
       const ev = evMap.get(k)
       const firstUnseen = items.findIndex((it) => !isSeen(it.id))
+      const lastImage = [...items].reverse().find((i) => i.kind === 'image')
       return {
         key: k,
         label: ev?.title || 'Everyone',
@@ -49,36 +55,24 @@ export function useStories(events) {
         firstUnseen: Math.max(0, firstUnseen),
         unseenCount: items.filter((it) => !isSeen(it.id)).length,
         latest: Math.max(...items.map((it) => +new Date(it.createdAt))),
-        cover: [...items].reverse().find((i) => i.kind === 'image')?.url || null,
-        coverThumb: [...items].reverse().find((i) => i.kind === 'image')?.thumb || null,
+        cover: lastImage?.url || null,
+        coverThumb: lastImage?.thumb || null,
         gradient: gradient(ev?.theme_colors),
         order: ev ? ev.sort : 999,
       }
     })
-    // polls that admins marked "add to Stories" become one extra circle; unanswered = unseen
-    // only polls that are still open and not answered yet; answered polls disappear
-    const openPolls = (pollData?.polls || []).filter((p) => p.is_open !== false && !pollData.mine.has(p.id))
-    if (openPolls.length) {
-      const items = openPolls.map((p) => ({
-        id: `poll:${p.id}`, kind: 'poll', poll: p, res: pollData.res.get(p.id), mine: pollData.mine.get(p.id),
-        voted: false, name: 'Rabchik', createdAt: p.created_at,
-        likeCount: 0, commentCount: 0, liked: false, uploader: null, url: null, caption: null,
-      }))
-      out.push({
-        key: 'polls', label: 'Polls', items, isPoll: true, unseen: true, unseenCount: items.length,
-        firstUnseen: 0, latest: Infinity, cover: null, gradient: themeGradient(openPolls[0]), order: -1,
-      })
-    }
-    // unseen first (polls on top), then the most recently posted; fully seen circles go to the end
     out.sort((a, b) => Number(b.unseen) - Number(a.unseen) || b.latest - a.latest || a.order - b.order)
     return out
-  }, [q.data, events, localSeen])
+  }, [q.data, events, seenSet])
 
   const markSeen = useCallback((id) => {
-    if (String(id).startsWith('poll:')) return // polls count as seen once answered
-    setLocalSeen((prev) => (prev.has(id) ? prev : new Set(prev).add(id)))
-    supabase.from('story_views').upsert({ media_id: id, user_id: uid }).then(() => {})
-  }, [uid])
+    setSeenSet((prev) => {
+      if (prev.has(id)) return prev
+      const next = new Set(prev).add(id)
+      saveSeen(next)
+      return next
+    })
+  }, [])
 
   return { groups, markSeen, refetch: q.refetch, loading: q.loading, error: q.error }
 }

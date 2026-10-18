@@ -5,11 +5,8 @@ import { deleteMedia } from '../lib/media'
 import { timeAgo } from '../lib/format'
 import Icon from './Icon'
 import Sheet from './Sheet'
-import { PollStage } from './Poll'
 
 const IMAGE_MS = 5000
-const POLL_MS = IMAGE_MS * 2 // poll slides stay twice as long
-const POLL_RESULT_MS = 5000 // how long the results stay after answering
 
 /**
  * Full-screen story viewer.
@@ -18,8 +15,8 @@ const POLL_RESULT_MS = 5000 // how long the results stay after answering
  * - tap right/left, or swipe left/right, to move; swipe down or ✕ to close
  */
 export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onClose, onSeen, onChanged }) {
-  const { session, isAdmin } = useAuth()
-  const uid = session.user.id
+  const { session, isSuper, canUpload } = useAuth()
+  const uid = session?.user?.id
   const [g, setG] = useState(startGroup)
   const [i, setI] = useState(startItem)
   const [p, setP] = useState(0)
@@ -30,8 +27,6 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
   const [holdPause, setHoldPause] = useState(false) // finger held down = pause
   const [readyId, setReadyId] = useState(null) // photo finished loading
   const [brokenId, setBrokenId] = useState(null)
-  const [held, setHeld] = useState(false) // a poll was answered: stop the timer, show results for a moment
-  const holdTimer = useRef(null)
   const videoRef = useRef(null)
   const down = useRef(null)
   const holdT = useRef(null)
@@ -40,7 +35,6 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
   const group = groups[g]
   const item = group?.items[i]
   const paused = showComments || holdPause
-  const isPoll = item?.kind === 'poll'
 
   const next = useCallback(() => {
     if (i < group.items.length - 1) { setI(i + 1); setP(0) }
@@ -54,27 +48,13 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
     else setP(0)
   }, [g, i, groups])
 
-  // after answering a poll slide, move on by itself (unless you already swiped away)
-  const nextRef = useRef(next)
-  const idRef = useRef(null)
-  nextRef.current = next
-  idRef.current = item?.id
-  const answered = useCallback((id) => {
-    onChanged?.()
-    setHeld(true)
-    clearTimeout(holdTimer.current)
-    holdTimer.current = setTimeout(() => { if (idRef.current === id) nextRef.current() }, POLL_RESULT_MS)
-  }, [onChanged])
-  useEffect(() => { setHeld(false); setHoldPause(false); clearTimeout(holdTimer.current) }, [item?.id])
-  useEffect(() => () => clearTimeout(holdTimer.current), [])
-
   useEffect(() => { if (item) onSeen?.(item.id) }, [item?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // photo timer
   useEffect(() => {
-    if (!item || item.kind === 'video' || paused || held) return
+    if (!item || item.kind === 'video' || paused) return
     if (item.kind === 'image' && readyId !== item.id) return // wait for the photo so the bar never runs on a blank screen
-    const dur = item.kind === 'poll' ? POLL_MS : IMAGE_MS
+    const dur = IMAGE_MS
     let raf
     const startAt = performance.now() - (p / 100) * dur
     const tick = (t) => {
@@ -85,7 +65,7 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [item?.id, paused, held, readyId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [item?.id, paused, readyId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // never get stuck on a slow photo: start the bar after 4s regardless
   useEffect(() => {
@@ -128,7 +108,6 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
     down.current = { x: e.clientX, y: e.clientY }
     holding.current = false
     clearTimeout(holdT.current)
-    if (isPoll) return
     // press and hold = pause (like Instagram); letting go resumes without changing slide
     holdT.current = setTimeout(() => { holding.current = true; setHoldPause(true) }, 220)
   }
@@ -155,6 +134,7 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
 
   const likeState = likes[item?.id] ?? { liked: item?.liked, count: item?.likeCount || 0 }
   const toggleLike = async () => {
+    if (!canUpload) return
     const liked = !likeState.liked
     setLikes((l) => ({ ...l, [item.id]: { liked, count: likeState.count + (liked ? 1 : -1) } }))
     if (liked) await supabase.from('media_likes').insert({ media_id: item.id, user_id: uid })
@@ -184,16 +164,14 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
           <div style={{ fontWeight: 700 }}>{group.label} · {item.name}</div>
           <div className="small muted">{timeAgo(item.createdAt)}</div>
         </div>
-        {!isPoll && (item.uploader === uid || isAdmin) && (
+        {uid && (item.uploader === uid || isSuper) && (
           <button className="round glass" onClick={remove} aria-label="Delete"><Icon name="trash" size={20} /></button>
         )}
         <button className="round glass" onClick={onClose} aria-label="Close"><Icon name="close" /></button>
       </div>
 
       <div className="stage" onPointerDown={onPointerDown} onPointerUp={onPointerUp} onPointerCancel={onPointerCancel} onContextMenu={(e) => e.preventDefault()}>
-        {isPoll ? (
-          <PollStage key={item.id} item={item} uid={uid} onAnswered={() => answered(item.id)} />
-        ) : item.kind === 'video' ? (
+        {item.kind === 'video' ? (
           <video
             key={item.id} ref={videoRef} src={item.url} poster={item.thumb || undefined} autoPlay playsInline muted={muted}
             onTimeUpdate={(e) => e.currentTarget.duration && setP((e.currentTarget.currentTime / e.currentTarget.duration) * 100)}
@@ -212,11 +190,15 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
           </>
         )}
         {holdPause && !showComments && <div className="paused-hint">Paused</div>}
-        {!isPoll && item.caption && <div className="caption">{item.caption}</div>}
-        {!isPoll && <div className="side" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-          <button className="round glass" onClick={toggleLike} aria-label="Like" style={{ color: likeState.liked ? '#ff375f' : undefined }}>
-            <Icon name="heart" size={24} fill={likeState.liked ? '#ff375f' : 'none'} color={likeState.liked ? '#ff375f' : 'currentColor'} />
-          </button>
+        {item.caption && <div className="caption">{item.caption}</div>}
+        {<div className="side" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+          {canUpload ? (
+            <button className="round glass" onClick={toggleLike} aria-label="Like" style={{ color: likeState.liked ? '#ff375f' : undefined }}>
+              <Icon name="heart" size={24} fill={likeState.liked ? '#ff375f' : 'none'} color={likeState.liked ? '#ff375f' : 'currentColor'} />
+            </button>
+          ) : (
+            <div className="round glass" aria-label="Likes" role="img"><Icon name="heart" size={24} color="#ff375f" fill="#ff375f" /></div>
+          )}
           <b>{likeState.count}</b>
           <button className="round glass" onClick={() => setShowComments(true)} aria-label="Comments"><Icon name="chat" size={23} /></button>
           <b>{commentCount}</b>
@@ -229,16 +211,16 @@ export default function StoryViewer({ groups, startGroup = 0, startItem = 0, onC
       </div>
       <div style={{ height: 'calc(24px + env(safe-area-inset-bottom, 0px))' }} />
 
-      {!isPoll && <CommentsSheet
-        open={showComments} item={item} onClose={() => setShowComments(false)}
+      {<CommentsSheet
+        open={showComments} item={item} canWrite={canUpload} onClose={() => setShowComments(false)}
         onAdded={() => setCounts((c) => ({ ...c, [item.id]: (c[item.id] ?? item.commentCount) + 1 }))}
       />}
     </div>
   )
 }
 
-function CommentsSheet({ open, item, onClose, onAdded }) {
-  const { session, isAdmin } = useAuth()
+function CommentsSheet({ open, item, canWrite, onClose, onAdded }) {
+  const { session, isSuper } = useAuth()
   const [list, setList] = useState([])
   const [text, setText] = useState('')
   const load = useCallback(async () => {
@@ -265,21 +247,21 @@ function CommentsSheet({ open, item, onClose, onAdded }) {
   return (
     <Sheet open={open} onClose={onClose} title="Comments">
       <div className="comments">
-        {list.length === 0 && <div className="empty">No comments yet. Say something nice.</div>}
+        {list.length === 0 && <div className="empty">No comments yet.</div>}
         {list.map((c) => (
           <div className="comment row between" key={c.id}>
             <div><b>{c.profiles?.name || 'Guest'}</b> {c.body}</div>
-            {(c.user_id === session.user.id || isAdmin) && (
+            {session && (c.user_id === session.user.id || isSuper) && (
               <button onClick={() => del(c.id)} aria-label="Delete comment" style={{ background: 'none', border: 0 }}><Icon name="close" size={16} /></button>
             )}
           </div>
         ))}
       </div>
-      <form className="row" onSubmit={send}>
+      {canWrite ? <form className="row" onSubmit={send}>
         <label htmlFor="cmt" style={{ position: 'absolute', left: -9999 }}>Add a comment</label>
         <input id="cmt" className="input" placeholder="Add a comment" value={text} onChange={(e) => setText(e.target.value)} maxLength={400} />
         <button className="round" style={{ background: 'var(--grad-btn)', color: '#fff' }} aria-label="Send"><Icon name="send" size={20} /></button>
-      </form>
+      </form> : <div className="small muted" style={{ textAlign: 'center' }}>Only the wedding team can comment.</div>}
     </Sheet>
   )
 }

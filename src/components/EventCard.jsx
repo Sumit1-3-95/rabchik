@@ -5,7 +5,7 @@ import { mediaUrl } from '../lib/supabase'
 import Icon from './Icon'
 
 export default function EventCard({ event, onAdd }) {
-  const { isAdmin, canUpload } = useAuth()
+  const { isSuper, canUpload } = useAuth()
   const img = mediaUrl(event.display_image_url || event.banner_urls?.[0])
   return (
     <div className="ecard">
@@ -23,7 +23,7 @@ export default function EventCard({ event, onAdd }) {
           <Icon name="plus" stroke={2} />
         </button>
       )}
-      {isAdmin && (
+      {isSuper && (
         <Link className="round glass edit" to={`/admin/events/${event.id}`} aria-label={`Edit ${event.title}`}>
           <Icon name="pencil" size={18} />
         </Link>

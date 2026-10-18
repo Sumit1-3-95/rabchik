@@ -354,3 +354,45 @@ select.input { appearance: none; }
 .rdots { display: flex; justify-content: center; gap: 6px; }
 .rdots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(143, 107, 26, 0.25); transition: width 0.2s, background 0.2s; }
 .rdots i.on { width: 18px; background: var(--maroon); }
+
+/* ---------- invitation page ---------- */
+.inv-hero { position: relative; overflow: hidden; text-align: center; padding: 28px 18px 0; border-radius: 28px; background: linear-gradient(180deg, #fffaf0, #f3e4b8); box-shadow: var(--sh); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.inv-hero .kicker { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.inv-hero .names { font-size: 32px; line-height: 1.1; text-wrap: balance; }
+.inv-date { font-weight: 700; letter-spacing: 0.04em; color: var(--maroon); margin-top: 4px; }
+.inv-couple { width: 62%; max-width: 250px; height: auto; margin-top: 10px; display: block; }
+.inv-note { text-align: center; color: var(--muted); line-height: 1.5; font-size: 14px; padding: 0 6px; }
+.inv-list { display: flex; flex-direction: column; gap: 8px; }
+.inv-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; background: #fff; box-shadow: var(--sh); text-decoration: none; color: inherit; }
+.inv-dot { width: 12px; height: 12px; border-radius: 6px; flex-shrink: 0; }
+.inv-title { font-weight: 700; font-size: 16px; }
+.inv-end { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 8px 0; }
+
+/* ---------- subtle red outline (matches the invitation) ---------- */
+:root { --red-line: rgba(123, 38, 58, 0.26); --red-line-strong: rgba(123, 38, 58, 0.5); }
+.app:not(.invmode) .glass { border-color: var(--red-line); }
+.nav.glass { border: 1.5px solid var(--red-line-strong); }
+.nav a.active { box-shadow: 0 2px 10px rgba(143, 107, 26, 0.14), inset 0 0 0 1.5px var(--red-line-strong); }
+.ecard .body, .card { border-color: var(--red-line); }
+.chip, .tile, .upload-tile, .btn.secondary, .input, .tchip { border: 1px solid var(--red-line); }
+.chip.on { border-color: transparent; }
+.tile { border: 1px solid var(--red-line); }
+.drawer { border-right: 1.5px solid var(--red-line); }
+.ring > div { box-shadow: 0 0 0 1px var(--red-line); }
+
+/* ---------- events page: one long scroll, dates as the markers ---------- */
+.daybar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 64px); z-index: 15; display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px; padding: 8px 16px; background: rgba(255, 253, 249, 0.86); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.daybar::-webkit-scrollbar { display: none; }
+.daychip { min-height: 32px; padding: 0 14px; font-size: 13px; box-shadow: none; transition: background 0.2s, color 0.2s; }
+.daychip.on { box-shadow: 0 4px 12px rgba(143, 107, 26, 0.25); }
+.evday { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 118px); }
+.evday + .evday { margin-top: 14px; }
+.evdate { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
+.evdate div { display: flex; flex-direction: column; line-height: 1.2; }
+.evdate strong { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+.evdate span { font-size: 13px; font-weight: 600; color: var(--accent); }
+.evdate i { flex: 1; height: 1px; background: linear-gradient(90deg, var(--red-line-strong), transparent); }
+.evdate em { font-style: normal; }
+.evwrap { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 118px); border-radius: 30px; }
+.evwrap.focus { animation: evfocus 2.4s ease-out; }
+@keyframes evfocus { 0%, 55% { box-shadow: 0 0 0 3px rgba(123, 38, 58, 0.55); } 100% { box-shadow: 0 0 0 3px rgba(123, 38, 58, 0); } }

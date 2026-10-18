@@ -11,7 +11,7 @@ import Tile from '../components/Tile'
 
 export default function Moments() {
   const { session, canUpload } = useAuth()
-  const uid = session.user.id
+  const uid = session?.user?.id
   const [filter, setFilter] = useState('all') // all | <date> | videos | mine
   const [viewer, setViewer] = useState(null) // { items, i }
   const [upload, setUpload] = useState(false)
@@ -63,7 +63,7 @@ export default function Moments() {
         <button className={`chip ${filter === 'all' ? 'on' : ''}`} onClick={() => setFilter('all')}>All</button>
         {days.map((d) => <button key={d} className={`chip ${filter === d ? 'on' : ''}`} onClick={() => setFilter(d)}>{dayLabel(d)}</button>)}
         <button className={`chip ${filter === 'videos' ? 'on' : ''}`} onClick={() => setFilter('videos')}>Videos</button>
-        <button className={`chip ${filter === 'mine' ? 'on' : ''}`} onClick={() => setFilter('mine')}>Mine</button>
+        {canUpload && <button className={`chip ${filter === 'mine' ? 'on' : ''}`} onClick={() => setFilter('mine')}>Mine</button>}
       </div>
 
       {q.error && <div className="err">Photos could not load: {q.error.message}</div>}
