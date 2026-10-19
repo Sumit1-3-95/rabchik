@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { SITE } from '../config'
 import { toast } from '../lib/hooks'
 import { supabase } from '../lib/supabase'
+import { startMusic, stopMusic, toggleMusic, useMusic } from '../lib/music'
 import '../invite.css'
 
 /* ---------------- content (from the invitation document) ---------------- */
@@ -130,6 +131,43 @@ function holi() {
   navigator.vibrate?.([20, 30, 20])
 }
 
+/** A few hearts floating up from the photo. */
+function hearts(el) {
+  if (reduceMotion()) return
+  const r = el.getBoundingClientRect()
+  const cols = ['#7b263a', '#c96d7c', '#e8556d', '#f2a516']
+  for (let i = 0; i < 9; i++) {
+    const h = document.createElement('span')
+    h.textContent = i % 3 === 0 ? '✦' : '♥'
+    Object.assign(h.style, { position: 'fixed', left: `${r.left + r.width * (0.2 + Math.random() * 0.6)}px`, top: `${r.top + r.height * (0.45 + Math.random() * 0.4)}px`, zIndex: 120, pointerEvents: 'none', fontSize: `${14 + Math.random() * 14}px`, color: cols[i % cols.length], willChange: 'transform, opacity' })
+    document.body.appendChild(h)
+    h.animate([{ transform: 'translate(0,0) scale(.5)', opacity: 0 }, { transform: `translate(${(Math.random() - 0.5) * 50}px, -40px) scale(1)`, opacity: 1, offset: 0.25 }, { transform: `translate(${(Math.random() - 0.5) * 90}px, -${120 + Math.random() * 90}px) scale(.8)`, opacity: 0 }], { duration: 1300 + Math.random() * 700, delay: Math.random() * 250, easing: 'ease-out' }).onfinish = () => h.remove()
+  }
+}
+
+/** Firecrackers: bursts of sparks that fly out, then fall like embers. */
+function crackers() {
+  if (reduceMotion()) return
+  const w = window.innerWidth, h = window.innerHeight
+  const cols = ['#f2a516', '#ffd400', '#ff5a36', '#e6007e', '#ffffff', '#c96d7c']
+  const add = (style) => { const n = document.createElement('div'); Object.assign(n.style, { position: 'fixed', pointerEvents: 'none', zIndex: 120, willChange: 'transform, opacity', ...style }); document.body.appendChild(n); return n }
+  for (let b = 0; b < 6; b++) {
+    const x = w * (0.15 + Math.random() * 0.7), y = h * (0.12 + Math.random() * 0.38), delay = b * 260 + Math.random() * 120
+    const base = cols[b % cols.length]
+    const flash = add({ left: `${x - 30}px`, top: `${y - 30}px`, width: '60px', height: '60px', borderRadius: '50%', background: 'radial-gradient(circle, #fff, rgba(255,214,120,.7) 40%, transparent 70%)' })
+    flash.animate([{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(2.2)', opacity: 0 }], { duration: 420, delay, easing: 'ease-out', fill: 'backwards' }).onfinish = () => flash.remove()
+    const N = 26
+    for (let i = 0; i < N; i++) {
+      const ang = (i / N) * Math.PI * 2 + Math.random() * 0.2, r = 70 + Math.random() * 70
+      const c = i % 5 === 0 ? '#ffffff' : base
+      const sp = add({ left: `${x}px`, top: `${y}px`, width: '4px', height: '4px', borderRadius: '50%', background: c, boxShadow: `0 0 6px 2px ${c}` })
+      const dx = Math.cos(ang) * r, dy = Math.sin(ang) * r
+      sp.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1, offset: 0.55, easing: 'ease-in' }, { transform: `translate(${dx * 1.1}px, ${dy + 90}px) scale(.3)`, opacity: 0 }], { duration: 1300 + Math.random() * 400, delay, easing: 'cubic-bezier(.1,.8,.3,1)', fill: 'backwards' }).onfinish = () => sp.remove()
+    }
+  }
+  navigator.vibrate?.([30, 50, 30, 50, 60])
+}
+
 /* ---------------- small drawings ---------------- */
 function Toran() {
   const N = 6, W = 40
@@ -201,6 +239,8 @@ function GMapsIcon() {
 }
 
 function Celebrate() {
+  const playing = useMusic()
+  const toggleTune = () => toggleMusic()
   return (
     <div className="iv-fx rv" role="group" aria-label="Celebrate">
       <button type="button" className="iv-fxb" aria-label="Flower shower" title="Flower shower" onClick={() => shower(26)}>
@@ -218,11 +258,25 @@ function Celebrate() {
       <button type="button" className="iv-fxb" aria-label="Champagne" title="Champagne" onClick={(e) => champagne(e.currentTarget)}>
         <svg viewBox="0 0 32 32" aria-hidden="true">
           <g transform="rotate(28 16 17)">
-            <rect x="12" y="11" width="8" height="19" rx="2.5" fill="#2f0f1a" /><path d="M13.5 11 v-5 h5 v5z" fill="#2f0f1a" /><rect x="13" y="3" width="6" height="4" rx="1.5" fill="#c96d7c" stroke="#7b263a" strokeWidth="1" />
-            <rect x="12" y="18" width="8" height="5" fill="#c96d7c" />
+            <rect x="12" y="11" width="8" height="19" rx="2.5" fill="#2f0f1a" /><path d="M13.5 11 v-5 h5 v5z" fill="#2f0f1a" /><rect x="13" y="3" width="6" height="4" rx="1.5" fill="#c49a52" stroke="#7b263a" strokeWidth="1" />
+            <rect x="12" y="18" width="8" height="5" fill="#c49a52" />
           </g>
           <circle cx="7" cy="7" r="1.8" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" /><circle cx="3.8" cy="12" r="1.2" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" /><circle cx="11" cy="3.2" r="1.2" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" />
         </svg>
+      </button>
+      <button type="button" className="iv-fxb" aria-label="Firecrackers" title="Firecrackers" onClick={crackers}>
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <g stroke="#f2a516" strokeWidth="2" strokeLinecap="round">{Array.from({ length: 8 }, (_, k) => { const a = (k * Math.PI) / 4; return <line key={k} x1={16 + Math.cos(a) * 5} y1={16 + Math.sin(a) * 5} x2={16 + Math.cos(a) * 12} y2={16 + Math.sin(a) * 12} stroke={k % 2 ? '#c96d7c' : '#f2a516'} /> })}</g>
+          <circle cx="16" cy="16" r="3.2" fill="#7b263a" />
+          <circle cx="4.5" cy="5" r="1.2" fill="#f2a516" /><circle cx="27.5" cy="27" r="1.2" fill="#c96d7c" />
+        </svg>
+      </button>
+      <button type="button" className={`iv-fxb ${playing ? 'playing' : ''}`} aria-label={playing ? 'Stop the wedding music' : 'Play wedding music'} aria-pressed={playing} title="Wedding music" onClick={toggleTune}>
+        {playing ? (
+          <svg viewBox="0 0 32 32" aria-hidden="true"><g fill="#7b263a">{[7, 13, 19].map((x, k) => <rect key={x} className="eq" style={{ animationDelay: `${k * 0.15}s` }} x={x} y="8" width="4.5" height="16" rx="2" />)}</g></svg>
+        ) : (
+          <svg viewBox="0 0 32 32" aria-hidden="true"><g fill="#7b263a"><path d="M13 22V8.5l11-2.5v13" fill="none" stroke="#7b263a" strokeWidth="2" strokeLinejoin="round" /><ellipse cx="10.2" cy="22.5" rx="3.6" ry="2.8" /><ellipse cx="21.2" cy="19.8" rx="3.6" ry="2.8" /></g></svg>
+        )}
       </button>
     </div>
   )
@@ -234,6 +288,7 @@ function Envelope({ onOpen }) {
   const open = () => {
     if (stage !== 'closed') return
     setStage('opening')
+    startMusic()
     navigator.vibrate?.(15)
     setTimeout(() => setStage('gone'), 1700)
     setTimeout(onOpen, 2400)
@@ -283,7 +338,7 @@ function Timeline() {
       {EVENTS.map((e, i) => {
         const on = open === e.id
         return (
-          <article className={`iv-ev rv ${on ? 'on' : ''}`} key={e.id} style={{ '--d': `${(i % 3) * 0.08}s` }}>
+          <article className={`iv-ev rv ${on ? 'on' : ''}`} key={e.id} style={{ '--d': `${(i % 2) * 0.06}s`, '--x': i % 2 ? '46px' : '-46px' }}>
             <div className="iv-mark" aria-hidden="true"><span>{e.mark}</span></div>
             <div className="iv-evc">
               <button className="iv-evb" aria-expanded={on} onClick={() => setOpen(on ? null : e.id)}>
@@ -292,6 +347,7 @@ function Timeline() {
                   <p>{e.blurb}</p>
                                   </div>
                 <div className="iv-date"><small>DEC</small><strong>{e.when.slice(4)}</strong>{e.part && <small>{e.part}</small>}</div>
+                <span className="iv-chev" aria-hidden="true">▾</span>
               </button>
               <div className="iv-more"><div>
                 <p className="iv-vibe">{e.vibe}</p>
@@ -306,7 +362,7 @@ function Timeline() {
 
 function Pass() {
   const saved = (() => { try { return JSON.parse(safeGet('rabchik.rsvp') || 'null') } catch { return null } })()
-  const [name, setName] = useState(() => saved?.name || safeGet('rabchik.guestname') || '')
+  const [name, setName] = useState(() => saved?.name || '')
   const [guests, setGuests] = useState(saved?.guests ?? 0)
   const [rsvpId, setRsvpId] = useState(saved?.id || null)
   const [torn, setTorn] = useState(!!saved)
@@ -330,7 +386,6 @@ function Pass() {
     if (error) return toast('Could not save your RSVP. Please try again')
     setRsvpId(data)
     safeSet('rabchik.rsvp', JSON.stringify({ id: data, name: name.trim(), guests }))
-    safeSet('rabchik.guestname', name.trim())
     setTorn(true)
     navigator.vibrate?.([20, 30, 20])
     shower(22)
@@ -385,18 +440,6 @@ function Pass() {
   )
 }
 
-function DanceMeter() {
-  const [v, setV] = useState(60)
-  const say = v < 25 ? 'Mostly here for the food.' : v < 50 ? 'Will dance after two plates.' : v < 75 ? 'Bollywood ready.' : v < 95 ? 'First on the floor, last to leave.' : 'Table-top legend. We see you.'
-  return (
-    <div className="iv-meter">
-      <label htmlFor="dance" className="iv-pl">How ready are your dance moves?</label>
-      <input id="dance" type="range" min="0" max="100" value={v} onChange={(e) => setV(+e.target.value)} style={{ '--v': `${v}%` }} />
-      <div className="iv-say" aria-live="polite" key={say}>{say}</div>
-    </div>
-  )
-}
-
 async function shareInvite() {
   const data = { title: 'Saurabh & Anushika’s wedding', text: `You are invited! 10–11 December, Jaipur. ${SITE.hashtag}`, url: window.location.origin }
   try {
@@ -413,11 +456,28 @@ export default function Invite() {
   const arch = useRef(null)
   const [hold, setHold] = useState(false)
   const timers = useRef({})
+  const motionAsked = useRef(false)
   const from = useRef(null)
   const pressEnd = () => { clearTimeout(timers.current.a); clearTimeout(timers.current.b); setHold(false); from.current = null }
+  const shakePhoto = () => {
+    const el = arch.current
+    if (!el) return
+    el.classList.remove('shk'); void el.offsetWidth; el.classList.add('shk')
+    setTimeout(() => el.classList.remove('shk'), 800)
+    hearts(el)
+    navigator.vibrate?.(25)
+  }
+  const pressUp = () => {
+    // a quick tap (not a long press, not a drag) makes the couple shake with delight
+    const quick = from.current && Date.now() - from.current.at < 320
+    pressEnd()
+    if (quick) shakePhoto()
+  }
   const pressStart = (e) => {
     pressEnd()
-    from.current = { x: e.clientX, y: e.clientY }
+    from.current = { x: e.clientX, y: e.clientY, at: Date.now() }
+    // iPhones ask permission before sharing motion: do it on this first tap
+    try { if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission && !motionAsked.current) { motionAsked.current = true; DeviceMotionEvent.requestPermission().catch(() => {}) } } catch { /* ignore */ }
     timers.current.a = setTimeout(() => setHold(true), 320)
     timers.current.b = setTimeout(() => { setHold(false); from.current = null; champagne(arch.current) }, 750)
   }
@@ -426,6 +486,29 @@ export default function Invite() {
   }
   useEffect(() => () => { clearTimeout(timers.current.a); clearTimeout(timers.current.b) }, [])
 
+  // shaking the phone shakes the photo too
+  useEffect(() => {
+    let last = 0
+    const onMotion = (e) => {
+      const a = e.accelerationIncludingGravity
+      if (!a) return
+      const mag = Math.abs(a.x || 0) + Math.abs(a.y || 0) + Math.abs(a.z || 0)
+      const now = Date.now()
+      if (mag > 38 && now - last > 1800) { last = now; shakePhoto(); shower(8) }
+    }
+    window.addEventListener('devicemotion', onMotion)
+    return () => window.removeEventListener('devicemotion', onMotion)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => () => stopMusic(), [])
+
+  // the envelope button in the header brings the closed envelope back
+  useEffect(() => {
+    const again = () => { stopMusic(); try { localStorage.removeItem('rabchik.invite.opened') } catch { /* private mode */ } window.scrollTo(0, 0); setOpened(false) }
+    window.addEventListener('rabchik:envelope', again)
+    return () => window.removeEventListener('rabchik:envelope', again)
+  }, [])
+
   // scroll-in animation + progress bar
   useEffect(() => {
     const el = root.current
@@ -433,7 +516,7 @@ export default function Invite() {
     const items = el.querySelectorAll('.rv')
     let io
     if ('IntersectionObserver' in window) {
-      io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.dataset.in = '1'; io.unobserve(e.target) } }), { threshold: 0.12, rootMargin: '0px 0px -30px 0px' })
+      io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.dataset.in = '1'; io.unobserve(e.target) } }), { threshold: 0, rootMargin: '0px 0px 140px 0px' })
       items.forEach((i) => io.observe(i))
     } else items.forEach((i) => { i.dataset.in = '1' })
     let raf = 0
@@ -468,7 +551,7 @@ export default function Invite() {
           <div className="iv-ganesh rv">॥ श्री गणेशाय नमः ॥</div>
           <div className="iv-eyebrow rv">A little invite, a lot of love</div>
           <div ref={arch} className={`iv-arch rv ${hold ? 'hold' : ''}`} role="img" aria-label="Saurabh and Anushika"
-            onPointerDown={pressStart} onPointerUp={pressEnd} onPointerCancel={pressEnd} onPointerLeave={pressEnd} onPointerMove={pressMove}
+            onPointerDown={pressStart} onPointerUp={pressUp} onPointerCancel={pressEnd} onPointerLeave={pressEnd} onPointerMove={pressMove}
             onContextMenu={(e) => e.preventDefault()}>
             <img src="/couple.webp" alt="" width="560" height="830" draggable="false" />
           </div>
@@ -528,7 +611,6 @@ export default function Invite() {
             <p>Tell us who is coming, then tear the stub on your boarding pass.</p>
           </header>
           <div className="rv"><Pass /></div>
-          <div className="rv"><DanceMeter /></div>
         </section>
 
 

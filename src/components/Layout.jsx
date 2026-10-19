@@ -67,7 +67,9 @@ export default function Layout() {
         <header className="header">
           <button className="round glass" aria-label="Open menu" onClick={() => setOpen(true)}><Icon name="menu" /></button>
           <div className="logo">RABHCHIK</div>
-          <span style={{ width: 44 }} aria-hidden="true" />
+          {invite
+            ? <button className="round glass" aria-label="Back to the closed envelope" title="Back to the envelope" onClick={() => window.dispatchEvent(new Event('rabchik:envelope'))}><Icon name="mail" /></button>
+            : <span style={{ width: 44 }} aria-hidden="true" />}
         </header>
       )}
       <Outlet />
