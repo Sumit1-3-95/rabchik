@@ -396,3 +396,12 @@ select.input { appearance: none; }
 .evwrap { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 118px); border-radius: 30px; }
 .evwrap.focus { animation: evfocus 2.4s ease-out; }
 @keyframes evfocus { 0%, 55% { box-shadow: 0 0 0 3px rgba(123, 38, 58, 0.55); } 100% { box-shadow: 0 0 0 3px rgba(123, 38, 58, 0); } }
+
+/* ---------- room list (super admin) ---------- */
+.rm-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 20px; }
+.rm-no { flex: 0 0 56px; text-align: center; line-height: 1.1; padding-right: 12px; border-right: 1px solid var(--red-line); }
+.rm-no b { display: block; font-size: 22px; font-weight: 700; color: var(--maroon); letter-spacing: -0.02em; }
+.rm-no small { font-size: 11px; color: var(--muted); }
+.rm-chips { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.rm-chip { min-height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--red-line); background: var(--rose); color: var(--maroon-2); font-size: 14px; font-weight: 600; max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+.rm-add { min-height: 32px; padding: 0 10px; border-radius: 16px; border: 1px dashed var(--red-line-strong); background: transparent; color: var(--accent); font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }

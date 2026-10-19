@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SITE } from '../config'
 import { toast } from '../lib/hooks'
+import { supabase } from '../lib/supabase'
 import '../invite.css'
 
 /* ---------------- content (from the invitation document) ---------------- */
-const MEHNDI_VENUE = { name: 'Gulmohar Garden', where: 'Jaipur, Rajasthan', note: 'Mehndi celebrations · 9 December', tag: 'Let the festivities begin!', icon: '🌸', maps: 'https://www.google.com/maps/search/?api=1&query=Gulmohar+Garden+Jaipur' }
-const MAIN_VENUE = { name: 'Riddhi Resort', where: 'Jaipur, Rajasthan', note: 'Main wedding venue · 10–11 December', tag: 'Two days, one very happy sky', icon: '🏰', maps: SITE.mapsUrl }
+const MAIN_VENUE = { name: 'Riddhi Resort', where: 'Jaipur, Rajasthan', note: 'Wedding venue · 10–11 December', tag: 'Two days, one very happy sky', icon: '🏰', maps: SITE.mapsUrl }
 
 const EVENTS = [
-  { id: 'mehndi', mark: '🌿', title: 'Mehndi', when: 'Dec 9', part: '', ymd: '20261209', next: '20261210', blurb: 'Henna, laughter, music and all things colourful.', venue: 'Gulmohar Garden', vibe: 'Come with clean hands. Leave with art.' },
   { id: 'lagan', mark: '🪔', title: 'Lagan Teeka', when: 'Dec 10', part: 'Morning', ymd: '20261210', next: '20261211', blurb: 'A beautiful morning of blessings and family traditions.', venue: 'Riddhi Resort', vibe: 'Arrive hungry for blessings (and breakfast).' },
   { id: 'sangeet', mark: '🪩', title: 'Sangeet', when: 'Dec 10', part: 'Night', ymd: '20261210', next: '20261211', blurb: 'Big beats, happy feet and dance-floor memories.', venue: 'Riddhi Resort', vibe: 'Warm up those knees. The playlist is dangerous.' },
   { id: 'haldi', mark: '🌼', title: 'Haldi', when: 'Dec 11', part: 'Morning', ymd: '20261211', next: '20261212', blurb: 'A sunny splash of turmeric, blessings and smiles.', venue: 'Riddhi Resort', vibe: 'Wear something you do not mind turning yellow.' },
@@ -17,11 +16,9 @@ const EVENTS = [
   { id: 'pheras', mark: '🔥', title: 'Pheras', when: 'Dec 11', part: 'Midnight', ymd: '20261211', next: '20261212', blurb: 'As the night turns to midnight, we take our seven sacred steps together.', venue: 'Riddhi Resort', vibe: 'Seven steps, one midnight, zero dry eyes.' },
 ]
 
-// 9 December 2026, 00:00 in India (IST = UTC+5:30)
-const START = new Date('2026-12-08T18:30:00Z').getTime()
+// 10 December 2026, 00:00 in India (IST = UTC+5:30)
+const START = new Date('2026-12-09T18:30:00Z').getTime()
 const END = new Date('2026-12-12T00:00:00+05:30').getTime()
-
-const QUOTE = '“Webster’s Dictionary defines ‘wedding’ as the fusing of two metals with a hot torch. Well, you know something... I think you guys are two metals. Gold medals.”'
 
 /* ---------------- helpers ---------------- */
 const safeGet = (k) => { try { return localStorage.getItem(k) } catch { return null } }
@@ -48,7 +45,7 @@ function downloadAllDates() {
 /** Flower petals drifting down the screen. */
 function shower(n = 28) {
   if (reduceMotion()) return
-  const colors = ['#f2a516', '#e07b00', '#d9b45a', '#c49a52', '#e9c987', '#fff1c9']
+  const colors = ['#f2a516', '#e07b00', '#c96d7c', '#c49a52', '#e8556d', '#fff1c9']
   const glyphs = ['✿', '❀', '✾', '❁']
   for (let i = 0; i < n; i++) {
     const s = document.createElement('span')
@@ -111,13 +108,35 @@ function champagne(el) {
   navigator.vibrate?.([30, 40, 70])
 }
 
+/** Holi: clouds of coloured gulal bursting across the screen. */
+function holi() {
+  if (reduceMotion()) return
+  const cols = ['#e6007e', '#ff7a00', '#ffd400', '#1fb26b', '#2f80ed', '#8e44ad']
+  const w = window.innerWidth, h = window.innerHeight
+  const add = (style) => { const n = document.createElement('div'); Object.assign(n.style, { position: 'fixed', pointerEvents: 'none', zIndex: 120, willChange: 'transform, opacity', ...style }); document.body.appendChild(n); return n }
+  for (let b = 0; b < 7; b++) {
+    const x = w * (0.12 + Math.random() * 0.76), y = h * (0.15 + Math.random() * 0.6), c = cols[b % cols.length]
+    const delay = b * 110
+    const size = 150 + Math.random() * 120
+    const cloud = add({ left: `${x - size / 2}px`, top: `${y - size / 2}px`, width: `${size}px`, height: `${size}px`, borderRadius: '50%', background: `radial-gradient(circle, ${c}cc, ${c}55 55%, transparent 72%)`, filter: 'blur(5px)' })
+    cloud.animate([{ transform: 'scale(.15)', opacity: 0.95 }, { transform: 'scale(1.5)', opacity: 0.7, offset: 0.45 }, { transform: 'scale(1.9)', opacity: 0 }], { duration: 1700, delay, easing: 'ease-out', fill: 'backwards' }).onfinish = () => cloud.remove()
+    for (let i = 0; i < 14; i++) {
+      const d = 3 + Math.random() * 6
+      const dot = add({ left: `${x}px`, top: `${y}px`, width: `${d}px`, height: `${d}px`, borderRadius: '50%', background: c })
+      const ang = Math.random() * Math.PI * 2, r = 70 + Math.random() * 150
+      dot.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(ang) * r}px, ${Math.sin(ang) * r + 40}px)`, opacity: 0 }], { duration: 1100 + Math.random() * 700, delay, easing: 'cubic-bezier(.2,.7,.4,1)', fill: 'backwards' }).onfinish = () => dot.remove()
+    }
+  }
+  navigator.vibrate?.([20, 30, 20])
+}
+
 /* ---------------- small drawings ---------------- */
 function Toran() {
   const N = 6, W = 40
   const swag = 'M0 4 ' + Array.from({ length: N }, (_, k) => `Q${k * W + W / 2} 19 ${(k + 1) * W} 4`).join(' ')
   return (
     <svg className="iv-toran" viewBox={`0 0 ${N * W} 70`} aria-hidden="true">
-      <path d={swag} stroke="#8f6b1a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+      <path d={swag} stroke="#7b263a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
       <path d={swag} stroke="#c49a52" strokeWidth="0.9" fill="none" strokeLinecap="round" transform="translate(0 2)" />
       {Array.from({ length: N + 1 }, (_, k) => <circle key={`b${k}`} cx={k * W} cy="4" r="2.6" fill="#c49a52" />)}
       {Array.from({ length: N }, (_, k) => {
@@ -128,8 +147,8 @@ function Toran() {
             <circle cx={x} cy="26" r="8.5" fill="#f2a516" />
             <circle cx={x} cy="26" r="5.4" fill="#e07b00" />
             <circle cx={x} cy="26" r="2.2" fill="#fff1c9" />
-            <path d={`M${x - 7} 36 L${x + 7} 36 L${x} 60 Z`} fill="#8f6b1a" />
-            <path d={`M${x - 3.6} 38 L${x + 3.6} 38 L${x} 53 Z`} fill="#d9b45a" />
+            <path d={`M${x - 7} 36 L${x + 7} 36 L${x} 60 Z`} fill="#7b263a" />
+            <path d={`M${x - 3.6} 38 L${x + 3.6} 38 L${x} 53 Z`} fill="#c96d7c" />
             <circle cx={x} cy="63" r="2.4" fill="#c49a52" />
           </g>
         )
@@ -142,10 +161,10 @@ function Corner({ cls }) {
   return (
     <svg className={`iv-corner ${cls}`} viewBox="0 0 60 60" aria-hidden="true">
       <g fill="none" strokeLinecap="round">
-        <path d="M2 58 V14 Q2 2 14 2 H58" stroke="#8f6b1a" strokeWidth="1.8" />
+        <path d="M2 58 V14 Q2 2 14 2 H58" stroke="#7b263a" strokeWidth="1.8" />
         <path d="M9 52 V20 Q9 9 20 9 H52" stroke="#c49a52" strokeWidth="1.3" />
-        <path d="M2 2 Q24 5 28 28 Q8 26 2 2Z" fill="rgba(143, 107, 26,.16)" stroke="#8f6b1a" strokeWidth="1" />
-        <circle cx="33" cy="33" r="2.4" fill="#8f6b1a" />
+        <path d="M2 2 Q24 5 28 28 Q8 26 2 2Z" fill="rgba(123, 38, 58,.16)" stroke="#7b263a" strokeWidth="1" />
+        <circle cx="33" cy="33" r="2.4" fill="#7b263a" />
         <circle cx="45" cy="14" r="1.6" fill="#c49a52" /><circle cx="14" cy="45" r="1.6" fill="#c49a52" />
       </g>
     </svg>
@@ -157,9 +176,9 @@ function Divider() {
     <svg className="iv-div rv" viewBox="0 0 240 30" aria-hidden="true">
       <g fill="none" stroke="#c49a52" strokeWidth="1.4" strokeLinecap="round">
         <path d="M4 15 H92" /><path d="M148 15 H236" />
-        <path d="M120 4 Q111 15 120 26 Q129 15 120 4Z" fill="rgba(143, 107, 26,.55)" />
-        <path d="M120 26 Q103 24 99 12 Q112 12 120 26Z" fill="rgba(217, 180, 90,.55)" />
-        <path d="M120 26 Q137 24 141 12 Q128 12 120 26Z" fill="rgba(217, 180, 90,.55)" />
+        <path d="M120 4 Q111 15 120 26 Q129 15 120 4Z" fill="rgba(123, 38, 58,.55)" />
+        <path d="M120 26 Q103 24 99 12 Q112 12 120 26Z" fill="rgba(201, 109, 124,.55)" />
+        <path d="M120 26 Q137 24 141 12 Q128 12 120 26Z" fill="rgba(201, 109, 124,.55)" />
         <circle cx="96" cy="15" r="2" fill="#c49a52" /><circle cx="144" cy="15" r="2" fill="#c49a52" />
       </g>
     </svg>
@@ -181,19 +200,31 @@ function GMapsIcon() {
   )
 }
 
-function Medal({ onTap, delay }) {
-  const [spin, setSpin] = useState(false)
+function Celebrate() {
   return (
-    <button className={`iv-medal ${spin ? 'spin' : ''}`} style={{ animationDelay: delay }} aria-label="Gold medal. Tap to celebrate"
-      onClick={() => { setSpin(true); setTimeout(() => setSpin(false), 900); onTap() }}>
-      <svg viewBox="0 0 80 100" aria-hidden="true">
-        <path d="M22 0 L40 36 L58 0 Z" fill="#d9b45a" /><path d="M30 0 L40 20 L50 0 Z" fill="#8f6b1a" />
-        <circle cx="40" cy="64" r="30" fill="#c49a52" /><circle cx="40" cy="64" r="30" fill="url(#gl)" />
-        <circle cx="40" cy="64" r="23" fill="none" stroke="#fff1c9" strokeWidth="2" strokeDasharray="3 4" />
-        <path d="M40 48 l5 11 12 1.5 -9 8 3 12 -11 -6.5 -11 6.5 3 -12 -9 -8 12 -1.5z" fill="#fff1c9" />
-        <defs><radialGradient id="gl" cx="35%" cy="30%"><stop offset="0" stopColor="#fff6d6" stopOpacity=".9" /><stop offset=".6" stopColor="#c49a52" stopOpacity="0" /></radialGradient></defs>
-      </svg>
-    </button>
+    <div className="iv-fx rv" role="group" aria-label="Celebrate">
+      <button type="button" className="iv-fxb" aria-label="Flower shower" title="Flower shower" onClick={() => shower(26)}>
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <g fill="#c96d7c" stroke="#7b263a" strokeWidth="1.1">{[0, 72, 144, 216, 288].map((a) => <ellipse key={a} cx="16" cy="8.5" rx="4.2" ry="6" transform={`rotate(${a} 16 16)`} />)}</g>
+          <circle cx="16" cy="16" r="3.6" fill="#f2a516" stroke="#7b263a" strokeWidth="1.1" />
+        </svg>
+      </button>
+      <button type="button" className="iv-fxb" aria-label="Holi colours" title="Holi colours" onClick={holi}>
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="11" cy="12" r="7" fill="#e6007e" opacity=".85" /><circle cx="21" cy="11" r="6.5" fill="#ffd400" opacity=".85" />
+          <circle cx="16" cy="21" r="7" fill="#2f80ed" opacity=".8" /><circle cx="25" cy="22" r="3.2" fill="#1fb26b" /><circle cx="6" cy="24" r="2.6" fill="#ff7a00" />
+        </svg>
+      </button>
+      <button type="button" className="iv-fxb" aria-label="Champagne" title="Champagne" onClick={(e) => champagne(e.currentTarget)}>
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <g transform="rotate(28 16 17)">
+            <rect x="12" y="11" width="8" height="19" rx="2.5" fill="#2f0f1a" /><path d="M13.5 11 v-5 h5 v5z" fill="#2f0f1a" /><rect x="13" y="3" width="6" height="4" rx="1.5" fill="#c96d7c" stroke="#7b263a" strokeWidth="1" />
+            <rect x="12" y="18" width="8" height="5" fill="#c96d7c" />
+          </g>
+          <circle cx="7" cy="7" r="1.8" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" /><circle cx="3.8" cy="12" r="1.2" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" /><circle cx="11" cy="3.2" r="1.2" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" />
+        </svg>
+      </button>
+    </div>
   )
 }
 
@@ -259,8 +290,7 @@ function Timeline() {
                 <div className="iv-evt">
                   <h3>{e.title}</h3>
                   <p>{e.blurb}</p>
-                  {e.id === 'mehndi' && <p className="iv-evv"><b>Venue:</b> Gulmohar Garden</p>}
-                </div>
+                                  </div>
                 <div className="iv-date"><small>DEC</small><strong>{e.when.slice(4)}</strong>{e.part && <small>{e.part}</small>}</div>
               </button>
               <div className="iv-more"><div>
@@ -275,20 +305,50 @@ function Timeline() {
 }
 
 function Pass() {
-  const [name, setName] = useState(() => safeGet('rabchik.guestname') || '')
-  const [torn, setTorn] = useState(false)
+  const saved = (() => { try { return JSON.parse(safeGet('rabchik.rsvp') || 'null') } catch { return null } })()
+  const [name, setName] = useState(() => saved?.name || safeGet('rabchik.guestname') || '')
+  const [guests, setGuests] = useState(saved?.guests ?? 0)
+  const [rsvpId, setRsvpId] = useState(saved?.id || null)
+  const [torn, setTorn] = useState(!!saved)
+  const [busy, setBusy] = useState(false)
+  const [shake, setShake] = useState(false)
+  const input = useRef(null)
   const shown = (name.trim() || 'Our favourite guest').toUpperCase()
-  const tear = () => {
-    if (torn) return
+  const first = name.trim().split(/\s+/)[0]
+  const who = guests === 0 ? 'Just you' : `You + ${guests}`
+
+  const submit = async () => {
+    if (busy || torn) return
+    if (!name.trim()) {
+      setShake(true); setTimeout(() => setShake(false), 600)
+      input.current?.focus()
+      return toast('Add your name first')
+    }
+    setBusy(true)
+    const { data, error } = await supabase.rpc('rsvp_save', { p_id: rsvpId, p_name: name.trim(), p_guests: guests })
+    setBusy(false)
+    if (error) return toast('Could not save your RSVP. Please try again')
+    setRsvpId(data)
+    safeSet('rabchik.rsvp', JSON.stringify({ id: data, name: name.trim(), guests }))
+    safeSet('rabchik.guestname', name.trim())
     setTorn(true)
     navigator.vibrate?.([20, 30, 20])
-    shower(18)
+    shower(22)
   }
+
   return (
     <div className="iv-passwrap">
-      <label className="iv-pl" htmlFor="pass-name">Your name, for your wedding pass</label>
-      <input id="pass-name" className="iv-input" value={name} maxLength={22} placeholder="Type your name"
-        onChange={(e) => { setName(e.target.value); safeSet('rabchik.guestname', e.target.value) }} />
+      <label className="iv-pl" htmlFor="pass-name">Your name</label>
+      <input id="pass-name" ref={input} className={`iv-input ${shake ? 'shake' : ''}`} value={name} maxLength={40} placeholder="Type your name" autoComplete="name"
+        onChange={(e) => setName(e.target.value)} disabled={torn} />
+
+      <div className="iv-pl" id="gl">Who is coming with you?</div>
+      <div className="iv-step" role="group" aria-labelledby="gl">
+        <button type="button" aria-label="One fewer guest" disabled={torn || guests === 0} onClick={() => setGuests((g) => Math.max(0, g - 1))}>−</button>
+        <div aria-live="polite"><b>{guests === 0 ? 'Just me' : `+${guests}`}</b><small>{guests === 0 ? 'No plus one' : guests === 1 ? 'guest with me' : 'guests with me'}</small></div>
+        <button type="button" aria-label="One more guest" disabled={torn || guests === 8} onClick={() => setGuests((g) => Math.min(8, g + 1))}>+</button>
+      </div>
+
       <div className={`iv-pass ${torn ? 'torn' : ''}`}>
         <div className="iv-pmain">
           <div className="iv-ptop"><b>JAIPUR EXPRESS</b><span>WEDDING PASS</span></div>
@@ -296,21 +356,30 @@ function Pass() {
           <div className="iv-pgrid">
             <div><small>FROM</small><b>Wherever you are</b></div>
             <div><small>TO</small><b>JAI · Jaipur</b></div>
-            <div><small>DATES</small><b>09–11 DEC</b></div>
+            <div><small>DATES</small><b>10–11 DEC</b></div>
             <div><small>GATE</small><b>Riddhi Resort</b></div>
-            <div><small>SEAT</small><b>Dance floor, 1A</b></div>
+            <div><small>PASSENGERS</small><b>{who}</b></div>
             <div><small>BAGS</small><b>Love only</b></div>
           </div>
         </div>
-        <button className="iv-stub" onClick={tear} aria-label="Tear the stub" disabled={torn}>
+        <button type="button" className="iv-stub" onClick={submit} aria-label="Tear the stub to confirm your RSVP" disabled={torn}>
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M8.5 8l11 9M8.5 16l11-9" /></g></svg>
           <span className="iv-bars" aria-hidden="true" />
-          <em>Tap to tear</em>
+          <em>Tear to RSVP</em>
         </button>
       </div>
+
+      {!torn && (
+        <button type="button" className="iv-rsvp" onClick={submit} disabled={busy}>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M8.5 8l11 9M8.5 16l11-9" /></g></svg>
+          {busy ? 'Saving your seat…' : 'Tear the stub & RSVP'}
+        </button>
+      )}
+
       <div className={`iv-stamp ${torn ? 'show' : ''}`}>
-        <p>Pass stamped. Boarding begins on 9 December.</p>
-        <button className="iv-btn" onClick={() => { downloadAllDates(); toast('Dates saved. Open the file to add them') }}>Save all dates to my calendar</button>
+        <p>{first ? `${first}, you are on the list!` : 'You are on the list!'}<br />Boarding begins on 10 December.</p>
+        <button type="button" className="iv-btn" onClick={() => { downloadAllDates(); toast('Dates saved. Open the file to add them') }}>Save all dates to my calendar</button>
+        <button type="button" className="iv-link" onClick={() => setTorn(false)}>Change my RSVP</button>
       </div>
     </div>
   )
@@ -401,9 +470,9 @@ export default function Invite() {
           <div ref={arch} className={`iv-arch rv ${hold ? 'hold' : ''}`} role="img" aria-label="Saurabh and Anushika"
             onPointerDown={pressStart} onPointerUp={pressEnd} onPointerCancel={pressEnd} onPointerLeave={pressEnd} onPointerMove={pressMove}
             onContextMenu={(e) => e.preventDefault()}>
-            <span className="iv-sun" aria-hidden="true" />
             <img src="/couple.webp" alt="" width="560" height="830" draggable="false" />
           </div>
+          <Celebrate />
           <h1 className="iv-names rv">Saurabh <span>&amp;</span> Anushika</h1>
           <p className="iv-intro rv">Two hearts, one forever, and our favourite people to celebrate it with. We’d love for you to be part of our wedding festivities in Jaipur.</p>
           <div className="iv-pill rv">✦ &nbsp;10–11 DECEMBER&nbsp; ✦</div>
@@ -420,7 +489,7 @@ export default function Invite() {
             <p>Our celebrations, all under one very happy sky.</p>
           </header>
           <div className="iv-venues">
-            {[MAIN_VENUE, MEHNDI_VENUE].map((v, i) => (
+            {[MAIN_VENUE].map((v, i) => (
               <div key={v.name} className="iv-venue rv" style={{ '--d': `${i * 0.1}s` }}>
                 <span className="iv-vi" aria-hidden="true">{v.icon}</span>
                 <h3>{v.name}</h3>
@@ -441,7 +510,7 @@ export default function Invite() {
           <header className="iv-head rv">
             <div className="iv-eyebrow gold">The wedding itinerary</div>
             <h2>One shaadi, many memories</h2>
-            <p>From mehndi moments to midnight pheras, here’s the plan. Tap any event to open it.</p>
+            <p>From blessings in the morning to midnight pheras, here’s the plan. Tap any event to open it.</p>
           </header>
           <Timeline />
           <div className="iv-bring rv">
@@ -454,29 +523,14 @@ export default function Invite() {
 
         <section className="iv-sec">
           <header className="iv-head rv">
-            <div className="iv-eyebrow gold">Your boarding pass</div>
+            <div className="iv-eyebrow gold">RSVP</div>
             <h2>Reserve your seat</h2>
-            <p>Add your name, then tear the stub.</p>
+            <p>Tell us who is coming, then tear the stub on your boarding pass.</p>
           </header>
           <div className="rv"><Pass /></div>
           <div className="rv"><DanceMeter /></div>
         </section>
 
-        <Divider />
-
-        <section className="iv-sec iv-office">
-          <header className="iv-head rv">
-            <div className="iv-eyebrow gold">A word from the office</div>
-          </header>
-          <blockquote className="iv-quote rv">
-            <p>{QUOTE}</p>
-            <footer>— Michael Scott, <cite>The Office</cite></footer>
-          </blockquote>
-          <div className="iv-medals rv" aria-label="Two gold medals">
-            <Medal onTap={() => shower(14)} delay="0s" /><Medal onTap={() => shower(14)} delay=".4s" />
-          </div>
-          <div className="iv-tap">Tap the medals. You earned them.</div>
-        </section>
 
         <footer className="iv-foot rv">
           <div className="iv-heart" aria-hidden="true">✿ ♥ ✿</div>

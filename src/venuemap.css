@@ -1,24 +1,9 @@
 .vm { gap: 14px; }
 .vm-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; background: #f3ede0; border: 1px solid var(--red-line); }
 .vm-seg button { min-height: 40px; border-radius: 12px; border: 0; background: transparent; font-weight: 600; font-size: 14px; color: var(--muted); }
-.vm-seg button.on { background: #fff; color: #7b263a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 0 0 1.5px var(--red-line-strong); }
-.vm-card { background: #fffaf0; border: 1.5px solid var(--red-line-strong); border-radius: 22px; padding: 8px 0 8px; box-shadow: var(--sh); overflow: hidden; }
-.vm-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 8px; }
-.vm-svg { display: block; width: 100%; height: auto; font-family: var(--font); }
-.vm-svg.zoom { width: 1000px; max-width: none; }
-.vm-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); padding: 8px 14px 4px; }
-.vm-zoom { min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--red-line-strong); background: #fff; color: #7b263a; font-weight: 600; font-size: 13px; }
-.vm-z.tap { cursor: pointer; }
-.vm-z.tap:active rect { filter: brightness(0.96); }
-.vm-z.hl rect { stroke: #c0202f; stroke-opacity: 1; stroke-width: 9; animation: vmpulse 1.1s ease-in-out infinite alternate; }
-@keyframes vmpulse { from { stroke-opacity: 1; } to { stroke-opacity: 0.35; } }
-.vm-route { animation: vmflow 1.4s linear infinite; }
-@keyframes vmflow { to { stroke-dashoffset: -52; } }
-.vm-msg { min-height: 46px; padding: 12px 14px; border-radius: 16px; background: #fff; border: 1px solid var(--red-line); font-size: 14px; line-height: 1.4; color: var(--muted); }
-.vm-msg.show { color: var(--ink); border-color: var(--red-line-strong); background: rgba(123, 38, 58, 0.05); font-weight: 600; }
-.vm-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12px; color: var(--muted); }
-.vm-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.vm-legend i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(123, 38, 58, 0.5); }
-.vm-legend i.red { background: #fff; border: 2px solid #c0202f; }
-.vm-actions { display: flex; flex-direction: column; gap: 10px; }
-@media (prefers-reduced-motion: reduce) { .vm-route, .vm-z.hl rect { animation: none; } }
+.vm-seg button.on { background: #fff; color: var(--maroon); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 0 0 1.5px var(--red-line-strong); }
+.vm-card { background: #fbf4e4; border: 1.5px solid var(--red-line-strong); border-radius: 22px; padding: 6px 0 10px; box-shadow: var(--sh); overflow: hidden; }
+.vm-scroll { overflow: auto; -webkit-overflow-scrolling: touch; max-height: 78vh; padding: 0 6px; }
+.vm-img { display: block; width: 100%; height: auto; border-radius: 16px; cursor: zoom-in; -webkit-user-select: none; user-select: none; }
+.vm-scroll.zoom .vm-img { width: 190%; max-width: none; cursor: zoom-out; }
+.vm-zoom { display: block; margin: 8px auto 0; min-height: 34px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--red-line-strong); background: #fff; color: var(--maroon); font-weight: 600; font-size: 13px; }

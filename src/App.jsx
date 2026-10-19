@@ -10,6 +10,8 @@ const VenueMap = lazy(() => import('./pages/VenueMap'))
 const Moments = lazy(() => import('./pages/Moments'))
 const EventEdit = lazy(() => import('./pages/admin/EventEdit'))
 const Team = lazy(() => import('./pages/admin/Team'))
+const Rsvps = lazy(() => import('./pages/admin/Rsvps'))
+const Rooms = lazy(() => import('./pages/admin/Rooms'))
 
 function Splash() {
   return <div className="app"><div className="spinner" aria-label="Loading" /></div>
@@ -38,6 +40,8 @@ export default function App() {
           <Route path="/moments" element={<Moments />} />
           <Route path="/admin/events/:id" element={<SuperOnly><EventEdit /></SuperOnly>} />
           <Route path="/admin/team" element={<SuperOnly><Team /></SuperOnly>} />
+          <Route path="/admin/rsvps" element={<SuperOnly><Rsvps /></SuperOnly>} />
+          <Route path="/admin/rooms" element={<SuperOnly><Rooms /></SuperOnly>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

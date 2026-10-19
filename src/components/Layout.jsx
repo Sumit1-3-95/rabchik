@@ -32,6 +32,8 @@ function Drawer({ open, onClose }) {
           <>
             <div className="eyebrow" style={{ padding: '16px 14px 4px' }}>Super admin</div>
             <button className="item" onClick={() => go('/admin/events/new')}><Icon name="cal" /> Add event card</button>
+            <button className="item" onClick={() => go('/admin/rsvps')}><Icon name="ticket" /> RSVPs</button>
+            <button className="item" onClick={() => go('/admin/rooms')}><Icon name="bed" /> Room list</button>
             <button className="item" onClick={() => go('/admin/team')}><Icon name="users" /> Team &amp; PINs</button>
           </>
         )}
