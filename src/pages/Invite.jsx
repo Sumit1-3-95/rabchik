@@ -109,6 +109,33 @@ function champagne(el) {
   navigator.vibrate?.([30, 40, 70])
 }
 
+/** Soap bubbles from the bubble gun: shiny, wobbly, drifting up and popping. */
+function bubbles(el) {
+  if (reduceMotion()) return
+  const r = el.getBoundingClientRect()
+  const ox = r.left + r.width / 2, oy = r.top + r.height / 2
+  for (let i = 0; i < 18; i++) {
+    const size = 14 + Math.random() * 34
+    const b = document.createElement('div')
+    Object.assign(b.style, {
+      position: 'fixed', left: `${ox - size / 2}px`, top: `${oy - size / 2}px`, width: `${size}px`, height: `${size}px`, borderRadius: '50%',
+      zIndex: 120, pointerEvents: 'none', willChange: 'transform, opacity',
+      background: 'radial-gradient(circle at 30% 28%, rgba(255,255,255,.95) 0 9%, rgba(255,255,255,0) 22%), radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 58%, rgba(201,109,124,.22) 72%, rgba(242,165,22,.28) 84%, rgba(47,128,237,.3) 100%)',
+      boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,.75), 0 0 8px rgba(255,255,255,.6)',
+    })
+    document.body.appendChild(b)
+    const dx = (Math.random() - 0.35) * 220, rise = 140 + Math.random() * 300, sway = (Math.random() - 0.5) * 70
+    b.animate([
+      { transform: 'translate(0,0) scale(.2)', opacity: 0 },
+      { transform: `translate(${dx * 0.3}px, ${-rise * 0.25}px) scale(1)`, opacity: 1, offset: 0.12 },
+      { transform: `translate(${dx * 0.6 + sway}px, ${-rise * 0.6}px) scale(1.02)`, opacity: 1, offset: 0.55 },
+      { transform: `translate(${dx * 0.85 - sway}px, ${-rise * 0.92}px) scale(1.08)`, opacity: 0.95, offset: 0.9 },
+      { transform: `translate(${dx}px, ${-rise}px) scale(1.4)`, opacity: 0 },
+    ], { duration: 2200 + Math.random() * 1800, delay: Math.random() * 600, easing: 'ease-out' }).onfinish = () => b.remove()
+  }
+  navigator.vibrate?.(15)
+}
+
 /** Holi: clouds of coloured gulal bursting across the screen. */
 function holi() {
   if (reduceMotion()) return
@@ -255,13 +282,13 @@ function Celebrate() {
           <circle cx="16" cy="21" r="7" fill="#2f80ed" opacity=".8" /><circle cx="25" cy="22" r="3.2" fill="#1fb26b" /><circle cx="6" cy="24" r="2.6" fill="#ff7a00" />
         </svg>
       </button>
-      <button type="button" className="iv-fxb" aria-label="Champagne" title="Champagne" onClick={(e) => champagne(e.currentTarget)}>
+      <button type="button" className="iv-fxb" aria-label="Bubble gun" title="Bubble gun" onClick={(e) => bubbles(e.currentTarget)}>
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <g transform="rotate(28 16 17)">
-            <rect x="12" y="11" width="8" height="19" rx="2.5" fill="#2f0f1a" /><path d="M13.5 11 v-5 h5 v5z" fill="#2f0f1a" /><rect x="13" y="3" width="6" height="4" rx="1.5" fill="#c49a52" stroke="#7b263a" strokeWidth="1" />
-            <rect x="12" y="18" width="8" height="5" fill="#c49a52" />
-          </g>
-          <circle cx="7" cy="7" r="1.8" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" /><circle cx="3.8" cy="12" r="1.2" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" /><circle cx="11" cy="3.2" r="1.2" fill="#e9c987" stroke="#7b263a" strokeWidth=".8" />
+          <path d="M5 14h14l3 3v4h-6l-1 7h-5l1-7H5z" fill="#7b263a" />
+          <rect x="7" y="16" width="9" height="2" rx="1" fill="#c96d7c" />
+          <circle cx="24.5" cy="11" r="4.2" fill="none" stroke="#c49a52" strokeWidth="1.8" />
+          <path d="M21.5 14l-2 2.5" stroke="#c49a52" strokeWidth="1.8" strokeLinecap="round" />
+          <circle cx="27.5" cy="5" r="2.2" fill="none" stroke="#7b263a" strokeWidth="1.1" /><circle cx="22" cy="5.5" r="1.4" fill="none" stroke="#7b263a" strokeWidth="1" /><circle cx="29" cy="14" r="1.2" fill="none" stroke="#7b263a" strokeWidth="1" />
         </svg>
       </button>
       <button type="button" className="iv-fxb" aria-label="Firecrackers" title="Firecrackers" onClick={crackers}>
