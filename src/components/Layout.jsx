@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 import { useToastState } from '../lib/hooks'
 import { SITE } from '../config'
+import InstaIcon from './InstaIcon'
 import Icon from './Icon'
 
 function Drawer({ open, onClose }) {
@@ -27,7 +28,7 @@ function Drawer({ open, onClose }) {
         <button className="item" onClick={() => go('/')}><Icon name="mail" /> Invitation</button>
         <button className="item" onClick={() => go('/events')}><Icon name="cal" /> Events</button>
         <button className="item" onClick={() => go('/map')}><Icon name="pin" /> Venue map</button>
-        <a href={SITE.instagramUrl} target="_blank" rel="noreferrer" onClick={onClose}><Icon name="instagram" /> Instagram</a>
+        <a href={SITE.instagramUrl} target="_blank" rel="noreferrer" onClick={onClose}><InstaIcon size={22} /> Instagram</a>
         {canUpload && (
           <>
             <div className="eyebrow" style={{ padding: '16px 14px 4px' }}>Admin</div>
@@ -86,7 +87,7 @@ export default function Layout() {
             <Icon name={icon} stroke={1.8} />
           </NavLink>
         ))}
-        <a href={SITE.instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram"><Icon name="instagram" stroke={1.8} /></a>
+        <a href={SITE.instagramUrl} target="_blank" rel="noreferrer" aria-label="Instagram"><InstaIcon size={30} /></a>
       </nav>
       <Drawer open={open} onClose={() => setOpen(false)} />
       {toast && <div className="toast" role="status">{toast}</div>}

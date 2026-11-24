@@ -172,7 +172,7 @@ select.input { appearance: none; }
 .ecard .img { position: relative; height: 176px; background-size: cover; background-position: center; }
 .tchip { position: absolute; left: 12px; bottom: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 14px; font-size: 13px; font-weight: 700; color: var(--ink); }
 .ecard .meta { padding: 14px 18px 16px; display: flex; flex-direction: column; gap: 4px; }
-.ecard .name { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.ecard .name { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
 .ecard .add { position: absolute; right: 12px; top: 128px; }
 .ecard .edit { position: absolute; right: 12px; top: 12px; }
 

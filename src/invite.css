@@ -66,24 +66,24 @@ body.env-lock { overflow: hidden; }
 /* hero: no photo box. Names, illustrations and the couple sit straight on the card */
 .iv-stage {
   --px: 0; --py: 0;
-  position: relative; width: 100%; aspect-ratio: 100 / 134; container-type: inline-size; cursor: pointer;
+  position: relative; width: 100%; aspect-ratio: 100 / 112; container-type: inline-size; cursor: pointer;
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: pan-y;
 }
 .iv-stage img { display: block; pointer-events: none; }
-.st-branch { position: absolute; top: -2cqw; right: -2cqw; width: 50cqw; height: auto; transform-origin: 100% 0; animation: swayR 7s ease-in-out infinite alternate; opacity: 0.95; }
-.st-leaves { position: absolute; left: -1cqw; bottom: 0; width: 20cqw; height: auto; transform-origin: 0 100%; animation: swayL 8s ease-in-out infinite alternate;
+.st-branch { position: absolute; top: -1cqw; right: -2cqw; width: 40cqw; height: auto; transform-origin: 100% 0; animation: swayR 7s ease-in-out infinite alternate; opacity: 0.95; }
+.st-leaves { position: absolute; left: -1cqw; bottom: 0; width: 15cqw; height: auto; transform-origin: 0 100%; animation: swayL 8s ease-in-out infinite alternate;
   -webkit-mask-image: linear-gradient(180deg, #000 80%, transparent), linear-gradient(90deg, #000 60%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(180deg, #000 80%, transparent), linear-gradient(90deg, #000 60%, transparent); mask-composite: intersect; }
-.st-chhatri { position: absolute; left: 12cqw; bottom: 3cqw; width: 42cqw; height: auto; opacity: 0.9;
+.st-chhatri { position: absolute; left: 9cqw; bottom: 2cqw; width: 34cqw; height: auto; opacity: 0.9;
   -webkit-mask-image: linear-gradient(180deg, #000 78%, transparent); mask-image: linear-gradient(180deg, #000 78%, transparent); }
 @keyframes swayR { from { transform: rotate(-1.4deg); } to { transform: rotate(1.4deg); } }
 @keyframes swayL { from { transform: rotate(1.2deg); } to { transform: rotate(-1.2deg); } }
-.st-names { position: absolute; left: 1cqw; top: 3cqw; display: flex; flex-direction: column; align-items: flex-start; color: var(--olive-d); z-index: 2; text-align: left; }
-.st-a, .st-s { font-size: 17.5cqw; line-height: 1.02; letter-spacing: 0.01em; text-shadow: 0 1px 0 rgba(255, 250, 240, 0.8); }
-.st-w { display: flex; align-items: center; gap: 2.4cqw; font-size: 9cqw; line-height: 1.2; color: var(--terra); letter-spacing: 0.08em; margin: 0.5cqw 0 0.5cqw 3cqw; }
-.st-w i { display: block; width: 8cqw; height: 1px; background: linear-gradient(90deg, var(--gold-l), transparent); }
+.st-names { position: absolute; left: 3cqw; top: 4cqw; display: flex; flex-direction: column; align-items: flex-start; color: var(--olive-d); z-index: 2; text-align: left; }
+.st-a, .st-s { font-size: 14cqw; line-height: 1.05; letter-spacing: 0.01em; text-shadow: 0 1px 0 rgba(255, 250, 240, 0.8); }
+.st-w { display: flex; align-items: center; gap: 2cqw; font-size: 7.5cqw; line-height: 1.2; color: var(--terra); letter-spacing: 0.08em; margin: 0.5cqw 0 0.5cqw 3cqw; }
+.st-w i { display: block; width: 7cqw; height: 1px; background: linear-gradient(90deg, var(--gold-l), transparent); }
 .st-w i:first-child { background: linear-gradient(270deg, var(--gold-l), transparent); }
-.st-heart { width: 38cqw; height: auto; margin: 3cqw 0 0 1cqw; opacity: 0.9; }
-.st-cw { position: absolute; right: -3cqw; bottom: 0; width: 68cqw; aspect-ratio: 676 / 946; pointer-events: none; transform-origin: 100% 100%;
+.st-heart { width: 30cqw; height: auto; margin: 3cqw 0 0 0; opacity: 0.9; }
+.st-cw { position: absolute; right: -1cqw; bottom: 0; width: 56cqw; aspect-ratio: 676 / 946; pointer-events: none; transform-origin: 100% 100%;
   translate: calc(var(--px) * 3px) calc(var(--py) * 1.5px); transition: translate 0.6s ease-out; animation: breathe 9s ease-in-out infinite alternate; z-index: 1; }
 @keyframes breathe { from { transform: scale(1); } to { transform: scale(1.022); } }
 .st-couple { width: 100%; height: 100%; transform-origin: 70% 100%; animation: lean 11s ease-in-out infinite alternate; filter: drop-shadow(0 6px 10px rgba(77, 27, 42, 0.18)); }

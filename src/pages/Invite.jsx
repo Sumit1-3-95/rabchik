@@ -4,6 +4,7 @@ import { SITE } from '../config'
 import { toast } from '../lib/hooks'
 import { supabase } from '../lib/supabase'
 import Icon from '../components/Icon'
+import InstaIcon from '../components/InstaIcon'
 import '../invite.css'
 
 /* ---------------- content ---------------- */
@@ -22,7 +23,7 @@ const DAYS = [
     key: '11', weekday: 'Friday', date: '11 December',
     events: [
       { id: 'haldi', icon: 'flower', title: 'Haldi', when: 'Fri, 11 Dec', part: 'Morning', time: '11:00 AM onwards', img: '/ev-haldi.webp', blurb: 'Sunshine, laughter, turmeric', vibe: 'Wear something that can turn yellow.', tint: '217,144,26' },
-      { id: 'reception', icon: 'glass', title: 'Reception', when: 'Fri, 11 Dec', part: 'Night', blurb: 'Dress up and raise a toast', vibe: 'Your best outfit awaits.', tint: '165,120,46' },
+      { id: 'reception', icon: 'glass', title: 'Reception', when: 'Fri, 11 Dec', part: 'Night', img: '/ev-reception.webp', blurb: 'Dress up and raise a toast', vibe: 'Your best outfit awaits.', tint: '165,120,46' },
       { id: 'pheras', icon: 'flame', title: 'Pheras', when: 'Fri, 11 Dec', part: 'Midnight', img: '/ev-mandap.webp', blurb: 'Seven sacred steps together', vibe: 'Seven steps, one midnight.', tint: '77,27,42' },
     ],
   },
@@ -706,7 +707,7 @@ export default function Invite() {
           <div className="iv-actions">
             <button type="button" className="iv-act solid" onClick={shareInvite}><Icon name="send" size={18} /><span>Share</span></button>
             <Link className="iv-act" to="/events"><Icon name="cal" size={18} /><span>Events</span></Link>
-            <a className="iv-act" href={SITE.instagramUrl} target="_blank" rel="noreferrer"><Icon name="instagram" size={18} /><span>Instagram</span></a>
+            <a className="iv-act" href={SITE.instagramUrl} target="_blank" rel="noreferrer"><InstaIcon size={24} /><span>Instagram</span></a>
           </div>
           <small>Made with love · Jaipur · December</small>
         </footer>
