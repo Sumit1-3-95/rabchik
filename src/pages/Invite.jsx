@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { SITE } from '../config'
 import { toast } from '../lib/hooks'
 import { supabase } from '../lib/supabase'
-import { startMusic, stopMusic, toggleMusic, useMusic } from '../lib/music'
 import '../invite.css'
 
 /* ---------------- content (from the invitation document) ---------------- */
@@ -266,8 +265,6 @@ function GMapsIcon() {
 }
 
 function Celebrate() {
-  const playing = useMusic()
-  const toggleTune = () => toggleMusic()
   return (
     <div className="iv-fx rv" role="group" aria-label="Celebrate">
       <button type="button" className="iv-fxb" aria-label="Flower shower" title="Flower shower" onClick={() => shower(26)}>
@@ -298,13 +295,6 @@ function Celebrate() {
           <circle cx="4.5" cy="5" r="1.2" fill="#f2a516" /><circle cx="27.5" cy="27" r="1.2" fill="#c96d7c" />
         </svg>
       </button>
-      <button type="button" className={`iv-fxb ${playing ? 'playing' : ''}`} aria-label={playing ? 'Stop the wedding music' : 'Play wedding music'} aria-pressed={playing} title="Wedding music" onClick={toggleTune}>
-        {playing ? (
-          <svg viewBox="0 0 32 32" aria-hidden="true"><g fill="#7b263a">{[7, 13, 19].map((x, k) => <rect key={x} className="eq" style={{ animationDelay: `${k * 0.15}s` }} x={x} y="8" width="4.5" height="16" rx="2" />)}</g></svg>
-        ) : (
-          <svg viewBox="0 0 32 32" aria-hidden="true"><g fill="#7b263a"><path d="M13 22V8.5l11-2.5v13" fill="none" stroke="#7b263a" strokeWidth="2" strokeLinejoin="round" /><ellipse cx="10.2" cy="22.5" rx="3.6" ry="2.8" /><ellipse cx="21.2" cy="19.8" rx="3.6" ry="2.8" /></g></svg>
-        )}
-      </button>
     </div>
   )
 }
@@ -315,7 +305,6 @@ function Envelope({ onOpen }) {
   const open = () => {
     if (stage !== 'closed') return
     setStage('opening')
-    startMusic()
     navigator.vibrate?.(15)
     setTimeout(() => setStage('gone'), 1700)
     setTimeout(onOpen, 2400)
@@ -527,11 +516,9 @@ export default function Invite() {
     return () => window.removeEventListener('devicemotion', onMotion)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => () => stopMusic(), [])
-
   // the envelope button in the header brings the closed envelope back
   useEffect(() => {
-    const again = () => { stopMusic(); try { localStorage.removeItem('rabchik.invite.opened') } catch { /* private mode */ } window.scrollTo(0, 0); setOpened(false) }
+    const again = () => { try { localStorage.removeItem('rabchik.invite.opened') } catch { /* private mode */ } window.scrollTo(0, 0); setOpened(false) }
     window.addEventListener('rabchik:envelope', again)
     return () => window.removeEventListener('rabchik:envelope', again)
   }, [])

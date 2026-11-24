@@ -1,0 +1,25 @@
+/* Documents and Important contacts pages (admins) */
+.dc-top { display: flex; align-items: center; gap: 12px; }
+.dc-list { display: flex; flex-direction: column; gap: 10px; }
+.dc-empty { text-align: center; padding: 32px 12px; color: var(--muted); font-size: 14px; }
+
+/* documents */
+.doc-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 20px; }
+.doc-badge { flex: 0 0 46px; height: 52px; border-radius: 12px; background: var(--rose); border: 1px solid var(--red-line); color: var(--maroon); display: grid; place-items: center; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; }
+.doc-main { flex: 1; min-width: 0; display: block; color: inherit; text-decoration: none; }
+.doc-main b { display: block; font-size: 16px; color: var(--maroon); overflow-wrap: anywhere; line-height: 1.25; }
+.doc-main small { display: block; margin-top: 3px; font-size: 12.5px; color: var(--muted); }
+.doc-del { flex: 0 0 40px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--red-line); background: #fff; color: var(--muted); display: grid; place-items: center; }
+
+/* contacts */
+.ct-row { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 22px; }
+.ct-head { display: flex; align-items: flex-start; gap: 10px; }
+.ct-name { flex: 1; min-width: 0; }
+.ct-name b { display: block; font-size: 18px; color: var(--maroon); line-height: 1.2; overflow-wrap: anywhere; }
+.ct-role { display: inline-block; margin-top: 5px; padding: 3px 10px; border-radius: 12px; background: var(--rose); border: 1px solid var(--red-line); color: var(--maroon-2); font-size: 12.5px; font-weight: 700; }
+.ct-edit { flex: 0 0 38px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--red-line); background: #fff; color: var(--muted); display: grid; place-items: center; }
+.ct-notes { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink, #3b2a2a); white-space: pre-wrap; overflow-wrap: anywhere; }
+.ct-call { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; border-radius: 26px; background: linear-gradient(180deg, #a1273f, #7b263a); color: #fff; text-decoration: none; font-weight: 700; font-size: 16px; box-shadow: 0 3px 0 rgba(123, 38, 58, 0.35); }
+.ct-call:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(123, 38, 58, 0.35); }
+.ct-call span { font-weight: 500; opacity: 0.9; font-variant-numeric: tabular-nums; }
+.dc-file { display: flex; align-items: center; gap: 10px; min-height: 52px; border: 1.5px dashed var(--red-line-strong); border-radius: 18px; background: rgba(255, 255, 255, 0.6); padding: 0 14px; color: var(--accent); font-weight: 600; width: 100%; text-align: left; overflow-wrap: anywhere; }

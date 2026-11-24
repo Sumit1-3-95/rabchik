@@ -12,6 +12,8 @@ const EventEdit = lazy(() => import('./pages/admin/EventEdit'))
 const Team = lazy(() => import('./pages/admin/Team'))
 const Rsvps = lazy(() => import('./pages/admin/Rsvps'))
 const Rooms = lazy(() => import('./pages/admin/Rooms'))
+const Documents = lazy(() => import('./pages/admin/Documents'))
+const Contacts = lazy(() => import('./pages/admin/Contacts'))
 
 function Splash() {
   return <div className="app"><div className="spinner" aria-label="Loading" /></div>
@@ -21,6 +23,12 @@ function Splash() {
 function SuperOnly({ children }) {
   const { isSuper } = useAuth()
   return isSuper ? children : <Navigate to="/" replace />
+}
+
+/** Admins and super admins (not public visitors): documents and important contacts. */
+function AdminOnly({ children }) {
+  const { canUpload } = useAuth()
+  return canUpload ? children : <Navigate to="/" replace />
 }
 
 export default function App() {
@@ -42,6 +50,8 @@ export default function App() {
           <Route path="/admin/team" element={<SuperOnly><Team /></SuperOnly>} />
           <Route path="/admin/rsvps" element={<SuperOnly><Rsvps /></SuperOnly>} />
           <Route path="/admin/rooms" element={<SuperOnly><Rooms /></SuperOnly>} />
+          <Route path="/admin/documents" element={<AdminOnly><Documents /></AdminOnly>} />
+          <Route path="/admin/contacts" element={<AdminOnly><Contacts /></AdminOnly>} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

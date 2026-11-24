@@ -6,7 +6,7 @@ import { SITE } from '../config'
 import Icon from './Icon'
 
 function Drawer({ open, onClose }) {
-  const { profile, session, isSuper, roleLabel, signOut } = useAuth()
+  const { profile, session, isSuper, canUpload, roleLabel, signOut } = useAuth()
   const nav = useNavigate()
   if (!open) return null
   const go = (to) => { onClose(); nav(to) }
@@ -28,6 +28,13 @@ function Drawer({ open, onClose }) {
         <button className="item" onClick={() => go('/events')}><Icon name="cal" /> Events</button>
         <button className="item" onClick={() => go('/map')}><Icon name="pin" /> Venue map</button>
         <a href={SITE.instagramUrl} target="_blank" rel="noreferrer" onClick={onClose}><Icon name="instagram" /> Instagram</a>
+        {canUpload && (
+          <>
+            <div className="eyebrow" style={{ padding: '16px 14px 4px' }}>Admin</div>
+            <button className="item" onClick={() => go('/admin/documents')}><Icon name="doc" /> Documents</button>
+            <button className="item" onClick={() => go('/admin/contacts')}><Icon name="phone" /> Important contacts</button>
+          </>
+        )}
         {isSuper && (
           <>
             <div className="eyebrow" style={{ padding: '16px 14px 4px' }}>Super admin</div>
