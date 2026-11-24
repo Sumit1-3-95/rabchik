@@ -1,4 +1,4 @@
-# Rabchik — Saurabh & Anushika's wedding app
+# Rabhchik — Saurabh & Anushika's wedding app
 
 A guest PWA: React + Vite, Supabase (auth, database, storage), hosted on Vercel.
 

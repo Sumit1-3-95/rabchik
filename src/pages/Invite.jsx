@@ -3,17 +3,29 @@ import { Link } from 'react-router-dom'
 import { SITE } from '../config'
 import { toast } from '../lib/hooks'
 import { supabase } from '../lib/supabase'
+import Icon from '../components/Icon'
 import '../invite.css'
 
-/* ---------------- content (from the invitation document) ---------------- */
-const MAIN_VENUE = { name: 'Riddhi Resort', where: 'Jaipur, Rajasthan', note: 'Wedding venue · 10–11 December', tag: 'Two days, one very happy sky', icon: '🏰', maps: SITE.mapsUrl }
+/* ---------------- content ---------------- */
+const MAIN_VENUE = { name: 'Riddhi Resort', where: 'Jaipur, Rajasthan', maps: SITE.mapsUrl }
 
-const EVENTS = [
-  { id: 'lagan', mark: '🪔', title: 'Lagan Teeka', when: 'Dec 10', part: 'Morning', ymd: '20261210', next: '20261211', blurb: 'A beautiful morning of blessings and family traditions.', venue: 'Riddhi Resort', vibe: 'Arrive hungry for blessings (and breakfast).' },
-  { id: 'sangeet', mark: '🪩', title: 'Sangeet', when: 'Dec 10', part: 'Night', ymd: '20261210', next: '20261211', blurb: 'Big beats, happy feet and dance-floor memories.', venue: 'Riddhi Resort', vibe: 'Warm up those knees. The playlist is dangerous.' },
-  { id: 'haldi', mark: '🌼', title: 'Haldi', when: 'Dec 11', part: 'Morning', ymd: '20261211', next: '20261212', blurb: 'A sunny splash of turmeric, blessings and smiles.', venue: 'Riddhi Resort', vibe: 'Wear something you do not mind turning yellow.' },
-  { id: 'reception', mark: '🥂', title: 'Reception', when: 'Dec 11', part: 'Night', ymd: '20261211', next: '20261212', blurb: 'Dress up, raise a toast and celebrate the newlyweds.', venue: 'Riddhi Resort', vibe: 'Your best outfit has been waiting for this.' },
-  { id: 'pheras', mark: '🔥', title: 'Pheras', when: 'Dec 11', part: 'Midnight', ymd: '20261211', next: '20261212', blurb: 'As the night turns to midnight, we take our seven sacred steps together.', venue: 'Riddhi Resort', vibe: 'Seven steps, one midnight, zero dry eyes.' },
+// short lines only: the card shows the title and blurb, the drop-down shows the details and one line
+const DAYS = [
+  {
+    key: '10', weekday: 'Thursday', date: '10 December',
+    events: [
+      { id: 'lagan', icon: 'diya', title: 'Lagan Teeka', when: 'Thu, 10 Dec', part: 'Morning', time: '11:00 AM onwards', img: '/ev-lagan.webp', blurb: 'Where it all becomes official', vibe: 'Come hungry, leave blessed.', tint: '123,38,58' },
+      { id: 'sangeet', icon: 'music', title: 'Sangeet', when: 'Thu, 10 Dec', part: 'Night', time: '6:00 PM onwards', img: '/ev-sangeet.webp', blurb: 'Many songs, zero shy feet', vibe: 'Warm up those knees.', tint: '181,84,106' },
+    ],
+  },
+  {
+    key: '11', weekday: 'Friday', date: '11 December',
+    events: [
+      { id: 'haldi', icon: 'flower', title: 'Haldi', when: 'Fri, 11 Dec', part: 'Morning', time: '11:00 AM onwards', img: '/ev-haldi.webp', blurb: 'Sunshine, laughter, turmeric', vibe: 'Wear something that can turn yellow.', tint: '217,144,26' },
+      { id: 'reception', icon: 'glass', title: 'Reception', when: 'Fri, 11 Dec', part: 'Night', blurb: 'Dress up and raise a toast', vibe: 'Your best outfit awaits.', tint: '165,120,46' },
+      { id: 'pheras', icon: 'flame', title: 'Pheras', when: 'Fri, 11 Dec', part: 'Midnight', img: '/ev-mandap.webp', blurb: 'Seven sacred steps together', vibe: 'Seven steps, one midnight.', tint: '77,27,42' },
+    ],
+  },
 ]
 
 // 10 December 2026, 00:00 in India (IST = UTC+5:30)
@@ -23,24 +35,7 @@ const END = new Date('2026-12-12T00:00:00+05:30').getTime()
 /* ---------------- helpers ---------------- */
 const safeGet = (k) => { try { return localStorage.getItem(k) } catch { return null } }
 const safeSet = (k, v) => { try { localStorage.setItem(k, v) } catch { /* private mode */ } }
-const enc = encodeURIComponent
 const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-
-function downloadAllDates() {
-  const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z'
-  const body = EVENTS.map((e) => [
-    'BEGIN:VEVENT', `UID:${e.id}-2026@rabhchik`, `DTSTAMP:${stamp}`,
-    `DTSTART;VALUE=DATE:${e.ymd}`, `DTEND;VALUE=DATE:${e.next}`,
-    `SUMMARY:${e.title} · Saurabh & Anushika`, `LOCATION:${e.venue}\\, Jaipur`,
-    `DESCRIPTION:${e.blurb}${e.part ? ` (${e.part})` : ''} ${SITE.hashtag}`, 'END:VEVENT',
-  ].join('\r\n')).join('\r\n')
-  const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Rabhchik//Wedding//EN\r\n${body}\r\nEND:VCALENDAR`
-  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
-  const a = document.createElement('a')
-  a.href = url; a.download = 'saurabh-anushika-wedding.ics'
-  document.body.appendChild(a); a.click(); a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 4000)
-}
 
 /** Flower petals drifting down the screen. */
 function shower(n = 28) {
@@ -195,12 +190,16 @@ function crackers() {
 }
 
 /* ---------------- small drawings ---------------- */
+const OLIVE = '#7b263a' // wine, for the line drawings
+const GOLD = '#c49a52'
+
 function Toran() {
   const N = 6, W = 40
   const swag = 'M0 4 ' + Array.from({ length: N }, (_, k) => `Q${k * W + W / 2} 19 ${(k + 1) * W} 4`).join(' ')
+  const tassel = ['#7b263a', '#c49a52', '#7b263a']
   return (
     <svg className="iv-toran" viewBox={`0 0 ${N * W} 70`} aria-hidden="true">
-      <path d={swag} stroke="#7b263a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+      <path d={swag} stroke={OLIVE} strokeWidth="2.2" fill="none" strokeLinecap="round" />
       <path d={swag} stroke="#c49a52" strokeWidth="0.9" fill="none" strokeLinecap="round" transform="translate(0 2)" />
       {Array.from({ length: N + 1 }, (_, k) => <circle key={`b${k}`} cx={k * W} cy="4" r="2.6" fill="#c49a52" />)}
       {Array.from({ length: N }, (_, k) => {
@@ -211,7 +210,7 @@ function Toran() {
             <circle cx={x} cy="26" r="8.5" fill="#f2a516" />
             <circle cx={x} cy="26" r="5.4" fill="#e07b00" />
             <circle cx={x} cy="26" r="2.2" fill="#fff1c9" />
-            <path d={`M${x - 7} 36 L${x + 7} 36 L${x} 60 Z`} fill="#7b263a" />
+            <path d={`M${x - 7} 36 L${x + 7} 36 L${x} 60 Z`} fill={tassel[k % 3]} />
             <path d={`M${x - 3.6} 38 L${x + 3.6} 38 L${x} 53 Z`} fill="#c96d7c" />
             <circle cx={x} cy="63" r="2.4" fill="#c49a52" />
           </g>
@@ -225,10 +224,10 @@ function Corner({ cls }) {
   return (
     <svg className={`iv-corner ${cls}`} viewBox="0 0 60 60" aria-hidden="true">
       <g fill="none" strokeLinecap="round">
-        <path d="M2 58 V14 Q2 2 14 2 H58" stroke="#7b263a" strokeWidth="1.8" />
-        <path d="M9 52 V20 Q9 9 20 9 H52" stroke="#c49a52" strokeWidth="1.3" />
-        <path d="M2 2 Q24 5 28 28 Q8 26 2 2Z" fill="rgba(123, 38, 58,.16)" stroke="#7b263a" strokeWidth="1" />
-        <circle cx="33" cy="33" r="2.4" fill="#7b263a" />
+        <path d="M2 58 V14 Q2 2 14 2 H58" stroke={OLIVE} strokeWidth="1.6" />
+        <path d="M9 52 V20 Q9 9 20 9 H52" stroke="#c49a52" strokeWidth="1.2" />
+        <path d="M2 2 Q24 5 28 28 Q8 26 2 2Z" fill="rgba(123, 38, 58,.16)" stroke={OLIVE} strokeWidth="1" />
+        <circle cx="33" cy="33" r="2.4" fill={OLIVE} />
         <circle cx="45" cy="14" r="1.6" fill="#c49a52" /><circle cx="14" cy="45" r="1.6" fill="#c49a52" />
       </g>
     </svg>
@@ -240,10 +239,33 @@ function Divider() {
     <svg className="iv-div rv" viewBox="0 0 240 30" aria-hidden="true">
       <g fill="none" stroke="#c49a52" strokeWidth="1.4" strokeLinecap="round">
         <path d="M4 15 H92" /><path d="M148 15 H236" />
-        <path d="M120 4 Q111 15 120 26 Q129 15 120 4Z" fill="rgba(123, 38, 58,.55)" />
-        <path d="M120 26 Q103 24 99 12 Q112 12 120 26Z" fill="rgba(201, 109, 124,.55)" />
-        <path d="M120 26 Q137 24 141 12 Q128 12 120 26Z" fill="rgba(201, 109, 124,.55)" />
+        <path d="M120 4 Q111 15 120 26 Q129 15 120 4Z" fill="rgba(123,38,58,.55)" />
+        <path d="M120 26 Q103 24 99 12 Q112 12 120 26Z" fill="rgba(201,109,124,.55)" />
+        <path d="M120 26 Q137 24 141 12 Q128 12 120 26Z" fill="rgba(201,109,124,.55)" />
         <circle cx="96" cy="15" r="2" fill="#c49a52" /><circle cx="144" cy="15" r="2" fill="#c49a52" />
+      </g>
+    </svg>
+  )
+}
+
+/** Line drawing of a Rajasthani chhatri (pavilion), like the one on the save-the-date. */
+function Chhatri() {
+  return (
+    <svg className="iv-chhatri" viewBox="0 0 180 84" aria-hidden="true">
+      <g fill="none" stroke={OLIVE} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 79 H174" /><path d="M14 79 V72 H166 V79" />
+        <path d="M62 72 V40 M78 72 V40 M102 72 V40 M118 72 V40" />
+        <path d="M56 40 H124" />
+        <path d="M58 40 Q90 6 122 40" />
+        <path d="M90 12 V4" /><circle cx="90" cy="3" r="1.8" fill={GOLD} stroke="none" />
+        <path d="M62 56 Q70 47 78 56 M78 56 Q90 44 102 56 M102 56 Q110 47 118 56" stroke={GOLD} />
+        <path d="M20 72 V54 M42 72 V54 M16 54 H46 M18 54 Q31 36 44 54" />
+        <path d="M31 40 V35" /><circle cx="31" cy="34" r="1.3" fill={GOLD} stroke="none" />
+        <path d="M138 72 V54 M160 72 V54 M134 54 H164 M136 54 Q149 36 162 54" />
+        <path d="M149 40 V35" /><circle cx="149" cy="34" r="1.3" fill={GOLD} stroke="none" />
+      </g>
+      <g fill="none" stroke={GOLD} strokeWidth="1" strokeLinecap="round" opacity=".7">
+        <path d="M22 83 q4 -2 8 0 t8 0 t8 0 t8 0" /><path d="M110 83 q4 -2 8 0 t8 0 t8 0 t8 0 t8 0" />
       </g>
     </svg>
   )
@@ -251,7 +273,7 @@ function Divider() {
 
 function GMapsIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
       <defs><clipPath id="gmpin"><path d="M12 1.5C7.9 1.5 4.6 4.8 4.6 8.9c0 5.4 7.4 13.6 7.4 13.6s7.4-8.2 7.4-13.6c0-4.1-3.3-7.4-7.4-7.4z" /></clipPath></defs>
       <g clipPath="url(#gmpin)">
         <rect x="0" y="0" width="24" height="24" fill="#EA4335" />
@@ -260,6 +282,26 @@ function GMapsIcon() {
         <path d="M24 9 L24 24 H12 L17 13Z" fill="#FBBC04" />
       </g>
       <circle cx="12" cy="8.9" r="2.9" fill="#fff" />
+    </svg>
+  )
+}
+
+// icons for the event cards and their details (24x24, drawn with currentColor)
+const GLYPH = {
+  diya: (<><path d="M3.5 14h17c0 4-3.5 6-8.5 6s-8.5-2-8.5-6z" /><path d="M12 12c-1.8-1.6-1.8-3.4 0-5.5 1.8 2.1 1.8 3.9 0 5.5z" /></>),
+  music: (<><path d="M9 18V6l10-2v12" /><circle cx="6.5" cy="18" r="2.5" /><circle cx="16.5" cy="16" r="2.5" /></>),
+  flower: (<><circle cx="12" cy="12" r="2.2" />{[0, 72, 144, 216, 288].map((a) => <ellipse key={a} cx="12" cy="6.2" rx="2.5" ry="3.6" transform={`rotate(${a} 12 12)`} />)}</>),
+  glass: (<><g transform="rotate(-14 8 20)"><path d="M5.5 3h5l-.4 6a2.1 2.1 0 0 1-4.2 0z" /><path d="M8 11v8M5.5 19h5" /></g><g transform="rotate(14 16 20)"><path d="M13.5 3h5l-.4 6a2.1 2.1 0 0 1-4.2 0z" /><path d="M16 11v8M13.5 19h5" /></g></>),
+  flame: <path d="M12 21c-4 0-6.5-2.6-6.5-6 0-3 2-4.5 3.2-7 .5 1.6 1.4 2.4 2.3 3 0-3 1.5-5.2 3.4-6.5.3 3 3.6 4.3 3.6 10.5 0 3.5-2.4 6-6 6z" />,
+  cal: (<><rect x="4" y="5" width="16" height="15" rx="3" /><path d="M4 10h16M9 3v4M15 3v4" /></>),
+  sun: (<><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" /></>),
+  moon: <path d="M20 14.500A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.500z" />,
+  pin: (<><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z" /><circle cx="12" cy="10" r="2" /></>),
+}
+function Glyph({ name, size = 22 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {GLYPH[name]}
     </svg>
   )
 }
@@ -290,7 +332,7 @@ function Celebrate() {
       </button>
       <button type="button" className="iv-fxb" aria-label="Firecrackers" title="Firecrackers" onClick={crackers}>
         <svg viewBox="0 0 32 32" aria-hidden="true">
-          <g stroke="#f2a516" strokeWidth="2" strokeLinecap="round">{Array.from({ length: 8 }, (_, k) => { const a = (k * Math.PI) / 4; return <line key={k} x1={16 + Math.cos(a) * 5} y1={16 + Math.sin(a) * 5} x2={16 + Math.cos(a) * 12} y2={16 + Math.sin(a) * 12} stroke={k % 2 ? '#c96d7c' : '#f2a516'} /> })}</g>
+          <g strokeWidth="2" strokeLinecap="round">{Array.from({ length: 8 }, (_, k) => { const a = (k * Math.PI) / 4; return <line key={k} x1={16 + Math.cos(a) * 5} y1={16 + Math.sin(a) * 5} x2={16 + Math.cos(a) * 12} y2={16 + Math.sin(a) * 12} stroke={k % 2 ? '#c96d7c' : '#f2a516'} /> })}</g>
           <circle cx="16" cy="16" r="3.2" fill="#7b263a" />
           <circle cx="4.5" cy="5" r="1.2" fill="#f2a516" /><circle cx="27.5" cy="27" r="1.2" fill="#c96d7c" />
         </svg>
@@ -330,7 +372,7 @@ function Countdown() {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t) }, [])
   if (now >= END) return <div className="iv-cd-done">Thank you for celebrating with us. {SITE.hashtag}</div>
   if (now >= START) return <div className="iv-cd-done">It is happening! The celebrations have begun.</div>
-  let s = Math.floor((START - now) / 1000)
+  const s = Math.floor((START - now) / 1000)
   const parts = [['days', Math.floor(s / 86400)], ['hours', Math.floor((s % 86400) / 3600)], ['mins', Math.floor((s % 3600) / 60)], ['secs', s % 60]]
   return (
     <div className="iv-cd" role="timer" aria-label="Countdown to the celebrations">
@@ -349,29 +391,40 @@ function Countdown() {
 
 function Timeline() {
   const [open, setOpen] = useState(null)
+  let n = 0
   return (
     <div className="iv-tl">
-      {EVENTS.map((e, i) => {
-        const on = open === e.id
-        return (
-          <article className={`iv-ev rv ${on ? 'on' : ''}`} key={e.id} style={{ '--d': `${(i % 2) * 0.06}s`, '--x': i % 2 ? '46px' : '-46px' }}>
-            <div className="iv-mark" aria-hidden="true"><span>{e.mark}</span></div>
-            <div className="iv-evc">
-              <button className="iv-evb" aria-expanded={on} onClick={() => setOpen(on ? null : e.id)}>
-                <div className="iv-evt">
-                  <h3>{e.title}</h3>
-                  <p>{e.blurb}</p>
-                                  </div>
-                <div className="iv-date"><small>DEC</small><strong>{e.when.slice(4)}</strong>{e.part && <small>{e.part}</small>}</div>
-                <span className="iv-chev" aria-hidden="true">▾</span>
-              </button>
-              <div className="iv-more"><div>
-                <p className="iv-vibe">{e.vibe}</p>
-              </div></div>
-            </div>
-          </article>
-        )
-      })}
+      {DAYS.map((day) => (
+        <div className="iv-day" key={day.key}>
+          <div className="iv-dayh rv"><i /><span><b>{day.weekday}</b> · {day.date}</span><i /></div>
+          {day.events.map((e) => {
+            const on = open === e.id
+            const i = n++
+            return (
+              <article className={`iv-ev rv ${on ? 'on' : ''}`} key={e.id} style={{ '--d': `${(i % 2) * 0.06}s`, '--x': i % 2 ? '40px' : '-40px', '--tint': e.tint }}>
+                <button className="iv-evb" aria-expanded={on} onClick={() => setOpen(on ? null : e.id)}>
+                  <span className="iv-ico"><Glyph name={e.icon} /></span>
+                  <span className="iv-evt">
+                    <small><Glyph name={e.part === 'Morning' ? 'sun' : 'moon'} size={13} />{e.part}</small>
+                    <h3>{e.title}</h3>
+                    <p>{e.blurb}</p>
+                  </span>
+                  <span className="iv-chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></span>
+                </button>
+                <div className="iv-more"><div>
+                  {e.img && <img className="iv-pic" src={e.img} alt="" loading="lazy" draggable="false" />}
+                  <div className="iv-facts">
+                    <span><Glyph name="cal" size={15} />{e.when}</span>
+                    <span><Glyph name={e.part === 'Morning' ? 'sun' : 'moon'} size={15} />{e.time || e.part}</span>
+                    <span><Glyph name="pin" size={15} />{MAIN_VENUE.name}</span>
+                  </div>
+                  <p className="iv-vibe">{e.vibe}</p>
+                </div></div>
+              </article>
+            )
+          })}
+        </div>
+      ))}
     </div>
   )
 }
@@ -409,15 +462,24 @@ function Pass() {
 
   return (
     <div className="iv-passwrap">
-      <label className="iv-pl" htmlFor="pass-name">Your name</label>
-      <input id="pass-name" ref={input} className={`iv-input ${shake ? 'shake' : ''}`} value={name} maxLength={40} placeholder="Type your name" autoComplete="name"
-        onChange={(e) => setName(e.target.value)} disabled={torn} />
-
-      <div className="iv-pl" id="gl">Who is coming with you?</div>
-      <div className="iv-step" role="group" aria-labelledby="gl">
-        <button type="button" aria-label="One fewer guest" disabled={torn || guests === 0} onClick={() => setGuests((g) => Math.max(0, g - 1))}>−</button>
-        <div aria-live="polite"><b>{guests === 0 ? 'Just me' : `+${guests}`}</b><small>{guests === 0 ? 'No plus one' : guests === 1 ? 'guest with me' : 'guests with me'}</small></div>
-        <button type="button" aria-label="One more guest" disabled={torn || guests === 8} onClick={() => setGuests((g) => Math.min(8, g + 1))}>+</button>
+      {/* name and guests in one row: the + sits on the right of the name */}
+      <div className={`iv-rrow ${shake ? 'shake' : ''} ${torn ? 'done' : ''}`}>
+        <input id="pass-name" ref={input} className="iv-input" aria-label="Your name" value={name} maxLength={40} placeholder="Your name" autoComplete="name"
+          onChange={(e) => setName(e.target.value)} disabled={torn} />
+        {guests === 0 ? (
+          <button type="button" className="iv-addg" onClick={() => setGuests(1)} disabled={torn} aria-label="Add a guest">
+            <b>+</b><span>Guest</span>
+          </button>
+        ) : (
+          <div className="iv-stp" role="group" aria-label="Guests with you">
+            <button type="button" aria-label="One fewer guest" disabled={torn} onClick={() => setGuests((g) => Math.max(0, g - 1))}>−</button>
+            <b aria-live="polite">+{guests}</b>
+            <button type="button" aria-label="One more guest" disabled={torn || guests === 8} onClick={() => setGuests((g) => Math.min(8, g + 1))}>+</button>
+          </div>
+        )}
+      </div>
+      <div className="iv-hint" aria-live="polite">
+        {guests === 0 ? 'Just you · tap + to bring guests' : `You + ${guests} ${guests === 1 ? 'guest' : 'guests'}`}
       </div>
 
       <div className={`iv-pass ${torn ? 'torn' : ''}`}>
@@ -425,12 +487,10 @@ function Pass() {
           <div className="iv-ptop"><b>JAIPUR EXPRESS</b><span>WEDDING PASS</span></div>
           <div className="iv-pname">{shown}</div>
           <div className="iv-pgrid">
-            <div><small>FROM</small><b>Wherever you are</b></div>
             <div><small>TO</small><b>JAI · Jaipur</b></div>
             <div><small>DATES</small><b>10–11 DEC</b></div>
             <div><small>GATE</small><b>Riddhi Resort</b></div>
             <div><small>PASSENGERS</small><b>{who}</b></div>
-            <div><small>BAGS</small><b>Love only</b></div>
           </div>
         </div>
         <button type="button" className="iv-stub" onClick={submit} aria-label="Tear the stub to confirm your RSVP" disabled={torn}>
@@ -449,8 +509,6 @@ function Pass() {
 
       <div className={`iv-stamp ${torn ? 'show' : ''}`}>
         <p>{first ? `${first}, you are on the list!` : 'You are on the list!'}<br />Boarding begins on 10 December.</p>
-        <button type="button" className="iv-btn" onClick={() => { downloadAllDates(); toast('Dates saved. Open the file to add them') }}>Save all dates to my calendar</button>
-        <button type="button" className="iv-link" onClick={() => setTorn(false)}>Change my RSVP</button>
       </div>
     </div>
   )
@@ -479,12 +537,12 @@ export default function Invite() {
     const el = arch.current
     if (!el) return
     el.classList.remove('shk'); void el.offsetWidth; el.classList.add('shk')
-    setTimeout(() => el.classList.remove('shk'), 800)
+    setTimeout(() => el.classList.remove('shk'), 900)
     hearts(el)
     navigator.vibrate?.(25)
   }
   const pressUp = () => {
-    // a quick tap (not a long press, not a drag) makes the couple shake with delight
+    // a quick tap (not a long press, not a drag) makes the couple sway with delight
     const quick = from.current && Date.now() - from.current.at < 320
     pressEnd()
     if (quick) shakePhoto()
@@ -497,12 +555,21 @@ export default function Invite() {
     timers.current.a = setTimeout(() => setHold(true), 320)
     timers.current.b = setTimeout(() => { setHold(false); from.current = null; champagne(arch.current) }, 750)
   }
+  // the couple drifts a little against the wall as a finger or mouse moves over the picture
+  const tilt = (x, y) => {
+    const el = arch.current
+    if (!el || reduceMotion()) return
+    el.style.setProperty('--px', x.toFixed(3)); el.style.setProperty('--py', y.toFixed(3))
+  }
   const pressMove = (e) => {
     if (from.current && Math.hypot(e.clientX - from.current.x, e.clientY - from.current.y) > 14) pressEnd()
+    const r = arch.current?.getBoundingClientRect()
+    if (r) tilt(((e.clientX - r.left) / r.width - 0.5) * 2, ((e.clientY - r.top) / r.height - 0.5) * 2)
   }
+  const leave = () => { pressEnd(); tilt(0, 0) }
   useEffect(() => () => { clearTimeout(timers.current.a); clearTimeout(timers.current.b) }, [])
 
-  // shaking the phone shakes the photo too
+  // shaking the phone shakes the picture too; tilting it moves the couple against the wall
   useEffect(() => {
     let last = 0
     const onMotion = (e) => {
@@ -512,8 +579,13 @@ export default function Invite() {
       const now = Date.now()
       if (mag > 38 && now - last > 1800) { last = now; shakePhoto(); shower(8) }
     }
+    const onOrient = (e) => {
+      if (e.gamma == null || e.beta == null) return
+      tilt(Math.max(-1, Math.min(1, e.gamma / 25)), Math.max(-1, Math.min(1, (e.beta - 45) / 25)))
+    }
     window.addEventListener('devicemotion', onMotion)
-    return () => window.removeEventListener('devicemotion', onMotion)
+    window.addEventListener('deviceorientation', onOrient)
+    return () => { window.removeEventListener('devicemotion', onMotion); window.removeEventListener('deviceorientation', onOrient) }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // the envelope button in the header brings the closed envelope back
@@ -563,17 +635,23 @@ export default function Invite() {
 
         <section className="iv-hero">
           <div className="iv-ganesh rv">॥ श्री गणेशाय नमः ॥</div>
-          <div className="iv-eyebrow rv">A little invite, a lot of love</div>
-          <div ref={arch} className={`iv-arch rv ${hold ? 'hold' : ''}`} role="img" aria-label="Saurabh and Anushika"
-            onPointerDown={pressStart} onPointerUp={pressUp} onPointerCancel={pressEnd} onPointerLeave={pressEnd} onPointerMove={pressMove}
+          {/* the hero sits straight on the card: names, illustrations and the couple are separate layers, so the couple can drift on their own */}
+          <div ref={arch} className={`iv-stage rv ${hold ? 'hold' : ''}`} role="img" aria-label="Anushika weds Saurabh"
+            onPointerDown={pressStart} onPointerUp={pressUp} onPointerCancel={pressEnd} onPointerLeave={leave} onPointerMove={pressMove}
             onContextMenu={(e) => e.preventDefault()}>
-            <img src="/couple.webp" alt="" width="560" height="830" draggable="false" />
+            <img className="st-branch" src="/hero-branch.webp" alt="" width="328" height="484" draggable="false" />
+            <img className="st-leaves" src="/hero-leaves.webp" alt="" width="215" height="564" draggable="false" />
+            <img className="st-chhatri" src="/hero-chhatri.webp" alt="" width="352" height="208" draggable="false" />
+            <div className="st-names" aria-hidden="true">
+              <span className="st-a">Anushika</span>
+              <span className="st-w"><i />weds<i /></span>
+              <span className="st-s">Saurabh</span>
+              <img className="st-heart" src="/div-heart.webp" alt="" width="310" height="30" draggable="false" />
+            </div>
+            <span className="st-cw"><img className="st-couple" src="/hero-couple.webp" alt="" width="676" height="946" draggable="false" /></span>
           </div>
           <Celebrate />
-          <h1 className="iv-names rv">Saurabh <span>&amp;</span> Anushika</h1>
           <p className="iv-intro rv">Two hearts, one forever, and our favourite people to celebrate it with. We’d love for you to be part of our wedding festivities in Jaipur.</p>
-          <div className="iv-pill rv">✦ &nbsp;10–11 DECEMBER&nbsp; ✦</div>
-          <p className="iv-note rv">Save the dates · Bring your dancing shoes · Come ready for happy tears</p>
           <Countdown />
         </section>
 
@@ -581,23 +659,20 @@ export default function Invite() {
 
         <section className="iv-sec" id="venue">
           <header className="iv-head rv">
-            <div className="iv-eyebrow gold">Your wedding-weekend guide</div>
+            <div className="iv-eyebrow">Your wedding-weekend guide</div>
             <h2>Meet us in Jaipur</h2>
             <p>Our celebrations, all under one very happy sky.</p>
           </header>
-          <div className="iv-venues">
-            {[MAIN_VENUE].map((v, i) => (
-              <div key={v.name} className="iv-venue rv" style={{ '--d': `${i * 0.1}s` }}>
-                <span className="iv-vi" aria-hidden="true">{v.icon}</span>
-                <h3>{v.name}</h3>
-                <p>{v.where}</p>
-                <small>{v.note}</small>
-                <a className="iv-map" href={v.maps} target="_blank" rel="noreferrer" aria-label={`Open ${v.name} in Google Maps`}>
-                  <GMapsIcon /><span>Open in Google Maps</span>
-                </a>
-                {v === MAIN_VENUE && <Link className="iv-plan" to="/map">See the resort floor plan</Link>}
-              </div>
-            ))}
+          <div className="iv-venue rv">
+            <Chhatri />
+            <h3>{MAIN_VENUE.name}</h3>
+            <p>{MAIN_VENUE.where}</p>
+            <div className="iv-vact">
+              <a className="iv-map" href={MAIN_VENUE.maps} target="_blank" rel="noreferrer" aria-label={`Open ${MAIN_VENUE.name} in Google Maps`}>
+                <GMapsIcon /><span>Open in Google Maps</span>
+              </a>
+              <Link className="iv-plan" to="/map">Resort floor plan</Link>
+            </div>
           </div>
         </section>
 
@@ -605,37 +680,33 @@ export default function Invite() {
 
         <section className="iv-sec" id="celebrations">
           <header className="iv-head rv">
-            <div className="iv-eyebrow gold">The wedding itinerary</div>
+            <div className="iv-eyebrow">The wedding itinerary</div>
             <h2>One shaadi, many memories</h2>
-            <p>From blessings in the morning to midnight pheras, here’s the plan. Tap any event to open it.</p>
+            <p>Tap an event to see the details.</p>
           </header>
           <Timeline />
-          <div className="iv-bring rv">
-            <strong>All you need to bring is your love 💌</strong>
-            <div>We’ll take care of the memories. You bring the blessings, the hugs and your best moves.</div>
-          </div>
         </section>
 
         <Divider />
 
-        <section className="iv-sec">
+        <section className="iv-sec iv-rsec">
           <header className="iv-head rv">
-            <div className="iv-eyebrow gold">RSVP</div>
+            <div className="iv-eyebrow">RSVP</div>
             <h2>Reserve your seat</h2>
-            <p>Tell us who is coming, then tear the stub on your boarding pass.</p>
+            <p>Add your name, then tear the stub.</p>
           </header>
           <div className="rv"><Pass /></div>
         </section>
 
-
         <footer className="iv-foot rv">
+          <img className="iv-eleph" src="/ev-elephant.webp" alt="" loading="lazy" width="560" height="438" draggable="false" />
           <div className="iv-heart" aria-hidden="true">✿ ♥ ✿</div>
           <div className="iv-fnames">Saurabh &amp; Anushika</div>
           <p>Can’t wait to celebrate with you.</p>
           <div className="iv-actions">
-            <button className="iv-btn" onClick={shareInvite}>Share this invite</button>
-            <Link className="iv-btn ghost" to="/events">See all events</Link>
-            <a className="iv-btn ghost" href={SITE.instagramUrl} target="_blank" rel="noreferrer">{SITE.hashtag} on Instagram</a>
+            <button type="button" className="iv-act solid" onClick={shareInvite}><Icon name="send" size={18} /><span>Share</span></button>
+            <Link className="iv-act" to="/events"><Icon name="cal" size={18} /><span>Events</span></Link>
+            <a className="iv-act" href={SITE.instagramUrl} target="_blank" rel="noreferrer"><Icon name="instagram" size={18} /><span>Instagram</span></a>
           </div>
           <small>Made with love · Jaipur · December</small>
         </footer>

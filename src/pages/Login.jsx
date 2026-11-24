@@ -35,7 +35,7 @@ export default function Login() {
         <div className="small" style={{ color: '#5b4a2a' }}>{SITE.datesLine} · {SITE.city.split(',')[0]} · <b>{SITE.hashtag}</b></div>
       </div>
 
-      <img className="couple" src="/couple.webp" alt="" width="560" height="830" draggable="false" />
+      <img className="couple" src="/couple.webp" alt="" width="561" height="784" draggable="false" />
 
       <form className="card glass col lg-card" onSubmit={submit}>
         <div className="small muted" style={{ textAlign: 'center' }}>For the wedding team who add photos and videos. Guests do not need to log in.</div>
