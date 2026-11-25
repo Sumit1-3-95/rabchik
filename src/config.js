@@ -7,8 +7,8 @@ export const SITE = {
   city: 'Jaipur, Rajasthan',
   venueName: 'Riddhi Resorts',
   mapsUrl: 'https://share.google/tu6OlRH62aat8eUjk',
-  // Replace with the wedding's Instagram page, e.g. 'https://www.instagram.com/rabhchik/'
-  instagramUrl: 'https://www.instagram.com/explore/tags/rabhchik/',
+  // The wedding's Instagram page (used by the nav, menu and invite footer)
+  instagramUrl: 'https://www.instagram.com/rabhchik23',
   // Shown on the Invite page when filled in. Example: { name: 'Saurabh', phone: '9876543210' }
   contacts: [],
 }
